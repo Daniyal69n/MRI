@@ -12,11 +12,13 @@ import {
   LogOut,
   Brain,
   Users,
+  UserCog,
   X,
+  Loader2,
 } from 'lucide-react';
 import { clearUserNotifications } from '@/lib/notifications';
 
-const menuItems = [
+const baseMenuItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/dashboard/patients', label: 'Patients', icon: Users },
   { href: '/dashboard/upload', label: 'Upload MRI', icon: Upload },
@@ -29,6 +31,27 @@ export const Sidebar = () => {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  // Avoid showing wrong menu on refresh: only show nav after we've read role from localStorage
+  const [roleChecked, setRoleChecked] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          setIsAdmin(!!user?.isAdmin);
+        } catch {
+          setIsAdmin(false);
+        }
+      } else {
+        setIsAdmin(false);
+      }
+      setRoleChecked(true);
+    }
+  }, []);
 
   useEffect(() => {
     const onToggle = () => setOpen((o) => !o);
@@ -36,41 +59,69 @@ export const Sidebar = () => {
     return () => window.removeEventListener('toggleSidebar', onToggle);
   }, []);
 
+  useEffect(() => {
+    const onUserChange = () => {
+      const userData = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          setIsAdmin(!!user?.isAdmin);
+        } catch {
+          setIsAdmin(false);
+        }
+      } else {
+        setIsAdmin(false);
+      }
+    };
+    window.addEventListener('userChanged', onUserChange);
+    return () => window.removeEventListener('userChanged', onUserChange);
+  }, []);
+
+  // Admin only sees Manage Users; regular users see full menu
+  const menuItems = isAdmin
+    ? [{ href: '/dashboard/users', label: 'Manage Users', icon: UserCog }]
+    : baseMenuItems;
+
   const close = () => setOpen(false);
 
   const handleLogout = () => {
-    if (typeof window !== 'undefined') {
-      // Get user data before clearing
+    if (typeof window === 'undefined') return;
+    // Hide dashboard immediately so user doesn't see options while redirecting
+    setIsLoggingOut(true);
+    // Small delay so the overlay paints before we block with redirect
+    requestAnimationFrame(() => {
       const userData = localStorage.getItem('user');
       let userId: string | null = null;
-      
       if (userData) {
         try {
           const user = JSON.parse(userData);
           userId = user.id;
-          
-          // Clear user-specific notifications
-          if (userId) {
-            clearUserNotifications(userId);
-          }
-        } catch (error) {
-          console.error('Error parsing user data:', error);
+          if (userId) clearUserNotifications(userId);
+        } catch {
+          // ignore
         }
       }
-      
-      // Clear user data
       localStorage.removeItem('user');
-      
-      // Dispatch event to notify other components
       window.dispatchEvent(new CustomEvent('userChanged'));
-      
-      // Redirect to home
-      router.push('/');
-    }
+      window.location.href = '/';
+    });
   };
 
   return (
     <>
+      {/* Full-screen overlay when logging out so user doesn't see dashboard options */}
+      {isLoggingOut && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-100"
+          aria-live="polite"
+          aria-label="Logging out"
+        >
+          <div className="flex flex-col items-center gap-3 text-gray-600">
+            <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
+            <span className="font-medium">Logging out...</span>
+          </div>
+        </div>
+      )}
       {/* Mobile backdrop */}
       <div
         role="button"
@@ -109,26 +160,37 @@ export const Sidebar = () => {
 
         <nav className="flex-1 p-4 overflow-y-auto">
           <ul className="space-y-1.5">
-            {menuItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = pathname === item.href;
-              return (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    onClick={close}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                      isActive
-                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30'
-                        : 'text-gray-300 hover:bg-gray-800/50 hover:text-white hover:translate-x-1'
-                    }`}
-                  >
-                    <Icon className="w-5 h-5 flex-shrink-0" />
-                    <span className="font-medium">{item.label}</span>
-                  </Link>
+            {!roleChecked ? (
+              <>
+                <li className="px-4 py-3 rounded-xl bg-gray-800/50 animate-pulse">
+                  <div className="h-5 w-24 bg-gray-600 rounded" />
                 </li>
-              );
-            })}
+                <li className="px-4 py-3 rounded-xl bg-gray-800/30 animate-pulse">
+                  <div className="h-5 w-20 bg-gray-600 rounded" />
+                </li>
+              </>
+            ) : (
+              menuItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = pathname === item.href;
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      onClick={close}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                        isActive
+                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30'
+                          : 'text-gray-300 hover:bg-gray-800/50 hover:text-white hover:translate-x-1'
+                      }`}
+                    >
+                      <Icon className="w-5 h-5 flex-shrink-0" />
+                      <span className="font-medium">{item.label}</span>
+                    </Link>
+                  </li>
+                );
+              })
+            )}
           </ul>
         </nav>
 

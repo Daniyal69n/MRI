@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Brain } from 'lucide-react';
+import { Brain, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { addNotification } from '@/lib/notifications';
@@ -20,6 +20,7 @@ export default function LoginPage() {
     general?: string;
   }>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,18 +61,16 @@ export default function LoginPage() {
         return;
       }
 
-      // Success - store user data and redirect to dashboard
+      // Success - store user data and redirect (admin → Manage Users, others → dashboard)
       if (typeof window !== 'undefined') {
         localStorage.setItem('user', JSON.stringify(data.user));
-        
-        // Add login notification
         addNotification({
           type: 'info',
           title: 'Login Successful',
           message: `Welcome back, ${data.user.firstName} ${data.user.lastName}! You have successfully logged in.`,
         });
       }
-      router.push('/dashboard');
+      router.push(data.user.isAdmin ? '/dashboard/users' : '/dashboard');
     } catch (error) {
       console.error('Login error:', error);
       setErrors({ general: 'Something went wrong. Please try again.' });
@@ -119,16 +118,30 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <Input
-                type="password"
-                name="password"
-                label="Password"
-                placeholder="Enter your password"
-                value={formData.password}
-                onChange={handleChange}
-                error={errors.password}
-                required
-              />
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  label="Password"
+                  placeholder="Enter your password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  error={errors.password}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-9 text-gray-500 hover:text-gray-700 focus:outline-none"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
               <div className="mt-2 text-right">
                 <Link
                   href="/forgot-password"
@@ -172,9 +185,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <p className="mt-6 text-center text-sm text-gray-600">
-          Volumetric Analysis of Brain Soft Tissue Constituents
-        </p>
+       
       </div>
     </div>
   );

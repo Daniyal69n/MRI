@@ -3,10 +3,12 @@ import connectDB from '@/lib/db';
 import User from '@/models/User';
 import bcrypt from 'bcryptjs';
 
+// Hardcoded admin account (no separate panel, same login page)
+const ADMIN_EMAIL = 'admin@brainanalysis.com';
+const ADMIN_PASSWORD = 'Admin@123';
+
 export async function POST(request: NextRequest) {
   try {
-    await connectDB();
-
     const body = await request.json();
     const { emailOrUsername, password } = body;
 
@@ -17,6 +19,32 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Hardcoded admin login (email or username "admin")
+    if (
+      (emailOrUsername.toLowerCase() === ADMIN_EMAIL || emailOrUsername.toLowerCase() === 'admin') &&
+      password === ADMIN_PASSWORD
+    ) {
+      return NextResponse.json(
+        {
+          message: 'Login successful',
+          user: {
+            id: 'admin',
+            firstName: 'Admin',
+            lastName: 'User',
+            username: 'admin',
+            email: ADMIN_EMAIL,
+            contactNumber: '',
+            pmdcNumber: '',
+            specialization: 'Administrator',
+            isAdmin: true,
+          },
+        },
+        { status: 200 }
+      );
+    }
+
+    await connectDB();
 
     // Find user by email or username
     const user = await User.findOne({
@@ -53,6 +81,7 @@ export async function POST(request: NextRequest) {
       contactNumber: user.contactNumber,
       pmdcNumber: user.pmdcNumber,
       specialization: user.specialization,
+      isAdmin: false,
     };
 
     return NextResponse.json(

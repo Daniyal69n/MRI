@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Brain } from 'lucide-react';
+import { Brain, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 
@@ -31,6 +31,7 @@ export default function RegisterPage() {
     general?: string;
   }>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -193,12 +194,11 @@ export default function RegisterPage() {
               >
                 <option value="">Select Specialization</option>
                 <option value="Medical Officer">Medical Officer</option>
-                <option value="Doctor">Doctor</option>
-                <option value="Surgeon">Surgeon</option>
+                
                 <option value="Radiologist">Radiologist</option>
                 <option value="Neurologist">Neurologist</option>
                 <option value="Researcher">Researcher</option>
-                <option value="Other">Other</option>
+                
               </select>
               {errors.specialization && (
                 <p className="mt-1 text-sm text-red-600">{errors.specialization}</p>
@@ -215,16 +215,30 @@ export default function RegisterPage() {
               error={errors.pmdcNumber}
             />
 
-            <Input
-              type="password"
-              name="password"
-              label="Password"
-              placeholder="Password (min. 6 characters)"
-              value={formData.password}
-              onChange={handleChange}
-              error={errors.password}
-              required
-            />
+            <div className="relative">
+              <Input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                label="Password"
+                placeholder="Password (min. 6 characters)"
+                value={formData.password}
+                onChange={handleChange}
+                error={errors.password}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-9 text-gray-500 hover:text-gray-700 focus:outline-none"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <EyeOff className="w-5 h-5" />
+                ) : (
+                  <Eye className="w-5 h-5" />
+                )}
+              </button>
+            </div>
 
             {errors.general && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
@@ -259,9 +273,8 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        <p className="mt-6 text-center text-sm text-gray-600">
-          Volumetric Analysis of Brain Soft Tissue Constituents
-        </p>
+        
+        
       </div>
     </div>
   );

@@ -1,6 +1,8 @@
 'use client';
 
-import { Upload, BarChart3, FileText, Activity } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Upload, BarChart3, FileText, Activity, Loader2 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { PageHeader } from '@/components/dashboard/PageHeader';
 import { StatCard } from '@/components/dashboard/StatCard';
@@ -9,6 +11,35 @@ import { DataTable } from '@/components/dashboard/DataTable';
 import { StatusBadge } from '@/components/dashboard/StatusBadge';
 
 export default function DashboardPage() {
+  const router = useRouter();
+  const [showContent, setShowContent] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        if (user?.isAdmin) {
+          router.replace('/dashboard/users');
+          return;
+        }
+      } catch {
+        // ignore
+      }
+    }
+    setShowContent(true);
+  }, [router]);
+
+  // Don't show Overview/Quick Actions until we know user is not admin (avoids flash for admin)
+  if (!showContent) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
   const stats = [
     { 
       label: 'Total Analyses', 

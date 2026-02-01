@@ -277,8 +277,7 @@ export default function SettingsPage() {
                 >
                   <option value="">Select Specialization</option>
                   <option value="Medical Officer">Medical Officer</option>
-                  <option value="Doctor">Doctor</option>
-                  <option value="Surgeon">Surgeon</option>
+                 
                   <option value="Radiologist">Radiologist</option>
                   <option value="Neurologist">Neurologist</option>
                   <option value="Researcher">Researcher</option>

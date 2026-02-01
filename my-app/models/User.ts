@@ -8,7 +8,7 @@ export interface IUser extends Document {
   contactNumber: string;
   password: string;
   pmdcNumber?: string;
-  specialization?: string; // Medical Officer, Doctor, Surgeon, etc.
+  specialization?: string; // Medical Officer,  etc.
   createdAt: Date;
   updatedAt: Date;
 }
@@ -59,7 +59,7 @@ const UserSchema: Schema = new Schema(
     specialization: {
       type: String,
       trim: true,
-      enum: ['Medical Officer', 'Doctor', 'Surgeon', 'Radiologist', 'Neurologist', 'Researcher', 'Other'],
+      enum: ['Medical Officer',  'Radiologist', 'Neurologist', 'Researcher', 'Other'],
     },
   },
   {

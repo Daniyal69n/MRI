@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Brain } from 'lucide-react';
+import { Brain, ScanLine, BarChart3, Cpu } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 
 export default function Home() {
@@ -18,9 +18,8 @@ export default function Home() {
           <p className="text-base sm:text-xl text-gray-600 max-w-2xl mx-auto px-1">
             Investigating Volumetric Analysis of Constituents Of Brain Soft Tissue
           </p>
-          <p className="text-sm sm:text-lg text-gray-500 mt-2 px-1">
-            Automated MRI analysis using machine learning and deep learning
-          </p>
+         
+         
         </div>
 
         <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-10 sm:mb-16">
@@ -49,34 +48,41 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="max-w-4xl mx-auto bg-white rounded-xl sm:rounded-lg shadow-lg p-5 sm:p-6 lg:p-8">
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 text-center">Features</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
-            <div className="text-center">
-              <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Brain className="w-8 h-8 text-blue-600" />
+        <div className="max-w-4xl mx-auto border border-gray-200/80 bg-white rounded-xl sm:rounded-2xl shadow-sm overflow-hidden">
+          <div className="border-b border-gray-100 bg-gray-50/50 px-5 sm:px-6 py-4 sm:py-5">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 text-center tracking-tight">
+              Platform Capabilities
+            </h2>
+            <p className="text-sm text-gray-500 text-center mt-1 max-w-xl mx-auto">
+              End-to-end workflow for brain soft tissue volumetric analysis
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-gray-100 p-5 sm:p-6">
+            <div className="flex flex-col items-center text-center py-6 sm:py-4 sm:px-4 first:pt-6 last:pb-6">
+              <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center mb-4 flex-shrink-0">
+                <ScanLine className="w-6 h-6 text-blue-600" />
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">MRI Processing</h3>
-              <p className="text-sm text-gray-600">
-                Automated preprocessing, denoising, and skull stripping
+              <h3 className="font-semibold text-gray-900 mb-2">Image Preprocessing</h3>
+              <p className="text-sm text-gray-600 leading-relaxed">
+                Standardized pipeline: noise reduction, intensity normalization, and skull stripping for consistent input quality.
               </p>
             </div>
-            <div className="text-center">
-              <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Brain className="w-8 h-8 text-green-600" />
+            <div className="flex flex-col items-center text-center py-6 sm:py-4 sm:px-4">
+              <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center mb-4 flex-shrink-0">
+                <BarChart3 className="w-6 h-6 text-emerald-600" />
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Volumetric Analysis</h3>
-              <p className="text-sm text-gray-600">
-                Accurate measurement of gray matter, white matter, and CSF volumes
+              <h3 className="font-semibold text-gray-900 mb-2">Quantitative Volumetrics</h3>
+              <p className="text-sm text-gray-600 leading-relaxed">
+                Quantification of gray matter, white matter, and CSF volumes with structured, report-ready outputs.
               </p>
             </div>
-            <div className="text-center">
-              <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Brain className="w-8 h-8 text-purple-600" />
+            <div className="flex flex-col items-center text-center py-6 sm:py-4 sm:px-4">
+              <div className="w-12 h-12 rounded-xl bg-violet-50 flex items-center justify-center mb-4 flex-shrink-0">
+                <Cpu className="w-6 h-6 text-violet-600" />
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">ML Models</h3>
-              <p className="text-sm text-gray-600">
-                Decision Tree and CNN models for accurate tissue classification
+              <h3 className="font-semibold text-gray-900 mb-2">Tissue Classification</h3>
+              <p className="text-sm text-gray-600 leading-relaxed">
+                Decision tree and CNN-based models for automated tissue segmentation and classification.
               </p>
             </div>
           </div>
