@@ -138,6 +138,7 @@ export default function PatientsPage() {
         <PageHeader
           title="Patients"
           description="View and manage all registered patients"
+          icon={User}
         />
         <Card>
           <div className="text-center py-12">
@@ -154,6 +155,7 @@ export default function PatientsPage() {
       <PageHeader
         title="Patients"
         description="View and manage all registered patients"
+        icon={User}
       />
 
       {showPatientDetails && selectedPatient ? (

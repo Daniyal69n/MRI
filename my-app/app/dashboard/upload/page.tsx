@@ -505,6 +505,7 @@ function UploadPageContent() {
       <PageHeader
         title="Upload MRI Images"
         description="Register a new patient and upload their MRI images for analysis"
+        icon={Upload}
       />
 
       {/* Step Indicator */}
@@ -1289,6 +1290,7 @@ export default function UploadPage() {
         <PageHeader 
           title="Upload MRI Images" 
           description="Upload and process brain MRI images for volumetric analysis"
+          icon={Upload}
         />
         <div className="flex items-center justify-center py-12">
           <div className="text-gray-500">Loading...</div>

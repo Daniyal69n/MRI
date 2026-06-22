@@ -56,6 +56,7 @@ export default function ResultsPage() {
       <PageHeader
         title="Analysis Results"
         description="View volumetric analysis results and performance metrics"
+        icon={BarChart3}
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">

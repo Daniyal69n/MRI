@@ -139,6 +139,7 @@ export default function ReportsPage() {
         <PageHeader
           title="Reports"
           description="View and download volumetric analysis reports"
+          icon={FileText}
         />
         <Card>
           <div className="text-center py-12">
@@ -155,6 +156,7 @@ export default function ReportsPage() {
       <PageHeader
         title="Reports"
         description="Generate and download MRI brain analysis reports"
+        icon={FileText}
       />
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
