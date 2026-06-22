@@ -41,6 +41,11 @@ interface PatientHistoryRecord {
   status: string;
   entries: HistoryEntry[];
   notes?: string;
+  gm_percent?: number;
+  wm_percent?: number;
+  csf_percent?: number;
+  tumor_detected?: boolean;
+  tumor_area_px?: number;
   createdAt: string;
 }
 
@@ -120,11 +125,6 @@ export default function PatientsPage() {
     },
     { key: 'age', label: 'Age' },
     { key: 'gender', label: 'Gender' },
-    {
-      key: 'status',
-      label: 'Status',
-      render: (value: string) => <StatusBadge status={value as any} />,
-    },
     {
       key: 'createdAt',
       label: 'Registered',
@@ -303,6 +303,32 @@ export default function PatientsPage() {
                       </button>
                       {expandedHistoryId === h._id && (
                         <div className="border-t border-gray-200 bg-gray-50 px-4 py-3 space-y-3">
+                          {/* Clustering Results */}
+                          {(h.gm_percent !== undefined || h.wm_percent !== undefined || h.csf_percent !== undefined) && (
+                            <div>
+                              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Volumetric Analysis</p>
+                              <div className="grid grid-cols-3 gap-2">
+                                <div className="bg-white rounded px-3 py-2 border border-gray-200">
+                                  <p className="text-xs text-gray-500 font-medium">Gray Matter</p>
+                                  <p className="text-sm font-semibold text-gray-900">
+                                    {h.gm_percent !== undefined ? `${h.gm_percent.toFixed(2)}%` : '-'}
+                                  </p>
+                                </div>
+                                <div className="bg-white rounded px-3 py-2 border border-gray-200">
+                                  <p className="text-xs text-gray-500 font-medium">White Matter</p>
+                                  <p className="text-sm font-semibold text-gray-900">
+                                    {h.wm_percent !== undefined ? `${h.wm_percent.toFixed(2)}%` : '-'}
+                                  </p>
+                                </div>
+                                <div className="bg-white rounded px-3 py-2 border border-gray-200">
+                                  <p className="text-xs text-gray-500 font-medium">CSF</p>
+                                  <p className="text-sm font-semibold text-gray-900">
+                                    {h.csf_percent !== undefined ? `${h.csf_percent.toFixed(2)}%` : '-'}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
                           {h.notes && (
                             <div>
                               <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Visit notes</p>
@@ -350,8 +376,6 @@ export default function PatientsPage() {
                 Upload MRI Images
               </Button>
               <div className="flex items-center gap-2">
-                <p className="text-sm text-gray-600">Status:</p>
-                <StatusBadge status={selectedPatient.status as any} />
               </div>
             </div>
           </div>

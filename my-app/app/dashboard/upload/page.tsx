@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Upload, FileImage, X, CheckCircle, User, ChevronRight, ChevronLeft, Download, Eye } from 'lucide-react';
+import { Upload, FileImage, X, CheckCircle, User, ChevronRight, ChevronLeft, Download, Eye, Cpu } from 'lucide-react';
 import { addNotification } from '@/lib/notifications';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -47,7 +47,11 @@ function UploadPageContent() {
   const [existingPatient, setExistingPatient] = useState<any>(null);
   const [isLoadingPatient, setIsLoadingPatient] = useState(false);
   const [preprocessingResults, setPreprocessingResults] = useState<any[]>([]);
+  const [clusteringResults, setClusteringResults] = useState<Record<string, any>>({});
+  const [clusteringLoading, setClusteringLoading] = useState<Record<string, boolean>>({});
+  const [clusteringErrors, setClusteringErrors] = useState<Record<string, string>>({});
   const [uploadError, setUploadError] = useState<string>('');
+  const [currentHistoryId, setCurrentHistoryId] = useState<string>('');
   const [processingProgress, setProcessingProgress] = useState<{ current: number; total: number; currentFile: string }>({
     current: 0,
     total: 0,
@@ -204,6 +208,8 @@ function UploadPageContent() {
     
     setUploading(true);
     setUploadError('');
+    setCurrentHistoryId('');
+    setClusteringResults({});
     setPreprocessingResults([]);
     
     try {
@@ -271,20 +277,83 @@ function UploadPageContent() {
           denoiseMethod: 'gaussian',
         }));
         try {
-          const histRes = await fetch(`/api/patients/${patientId}/history`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              uploadedBy: user.id,
-              visitDate: visitDate || new Date().toISOString().slice(0, 10),
-              imageCount: results.length,
-              status: 'completed',
-              entries,
-              notes: visitNotes.trim() || undefined,
-            }),
-          });
-          if (!histRes.ok) {
-            const err = await histRes.json().catch(() => ({}));
+          // Check if there's already a history entry for this visit date
+          const checkRes = await fetch(`/api/patients/${patientId}/history`);
+          let existingHistoryId: string | null = null;
+          
+          if (checkRes.ok) {
+            const historyData = await checkRes.json();
+            if (historyData.history && historyData.history.length > 0) {
+              // Check if today's date already has an entry
+              const today = visitDate || new Date().toISOString().slice(0, 10);
+              const existingEntry = historyData.history.find((h: any) => {
+                const histDate = new Date(h.visitDate).toISOString().slice(0, 10);
+                return histDate === today;
+              });
+              if (existingEntry) {
+                existingHistoryId = existingEntry._id;
+              }
+            }
+          }
+
+          let histRes;
+          let responseData;
+          // Use server-side upsert to create or replace history for this patient+visitDate
+          try {
+            histRes = await fetch(`/api/patients/${patientId}/history/upsert`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                uploadedBy: user.id,
+                visitDate: visitDate || new Date().toISOString().slice(0, 10),
+                imageCount: results.length,
+                status: 'completed',
+                entries,
+                notes: visitNotes.trim() || undefined,
+                // include existingHistoryId when available so server can target exact doc
+                historyId: existingHistoryId || undefined,
+              }),
+            });
+            responseData = await histRes.json().catch(() => ({}));
+          } catch (e) {
+            console.error('Upsert history request failed:', e);
+            responseData = {};
+            histRes = { ok: false } as any;
+          }
+
+          if (histRes.ok) {
+            // Store the history ID for use in clustering results
+            const createdHistory = responseData.history;
+            if (existingHistoryId) {
+              setCurrentHistoryId(existingHistoryId);
+            } else if (createdHistory && createdHistory._id) {
+              setCurrentHistoryId(createdHistory._id);
+            }
+            // Notify other pages (dashboard) that patient history changed
+            try {
+              if (typeof window !== 'undefined') {
+                // Same-window event
+                window.dispatchEvent(new CustomEvent('patient-history-updated', { detail: { patientId } }));
+                // Broadcast to other tabs/windows using BroadcastChannel when available
+                try {
+                  const bc = new BroadcastChannel('patient-history');
+                  bc.postMessage({ patientId });
+                  bc.close();
+                } catch (e) {
+                  // BroadcastChannel may not be available in some environments
+                }
+                // Fallback: write to localStorage to trigger storage events in other tabs
+                try {
+                  localStorage.setItem('patient-history-updated', JSON.stringify({ patientId, ts: Date.now() }));
+                } catch (e) {
+                  // ignore
+                }
+              }
+            } catch (e) {
+              console.warn('Failed to dispatch patient-history-updated event', e);
+            }
+          } else {
+            const err = responseData;
             console.error('Patient history save failed:', err);
             addNotification({ type: 'warning', title: 'History not saved', message: 'Visit was recorded but history could not be saved. You can still view preprocessing results.' });
           }
@@ -316,6 +385,118 @@ function UploadPageContent() {
       console.error('Upload error:', error);
       setUploadError(error.message || 'Failed to upload and process images');
       setUploading(false);
+    }
+  };
+
+  const runClustering = async (result: any) => {
+    const key = result?.filename || `idx_${Math.random()}`;
+    if (!result?.processed_image_base64) return;
+
+    setClusteringLoading(prev => ({ ...prev, [key]: true }));
+    setClusteringErrors(prev => ({ ...prev, [key]: '' }));
+
+    try {
+      const response = await fetch('/api/cluster', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          preprocessed_image_base64: result.processed_image_base64,
+          original_image_base64: result.original_image_base64,
+          k: 4,
+          min_region_area_px: 80,
+          morph_kernel: 5,
+          min_anomaly_area_px: 50,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data?.error || data?.detail || 'Clustering failed');
+      }
+
+      setClusteringResults(prev => ({ ...prev, [key]: data }));
+
+      // Save clustering results to PatientHistory
+      const tryPatch = async (historyId: string | null) => {
+        try {
+          // Use upsert endpoint to reliably replace the entry for this visitDate
+          const upsertRes = await fetch(`/api/patients/${patientId}/history/upsert`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              historyId: historyId || undefined,
+              visitDate: visitDate || new Date().toISOString().slice(0, 10),
+              gm_percent: data.gm_percent,
+              wm_percent: data.wm_percent,
+              csf_percent: data.csf_percent,
+              tumor_detected: data.tumor_detected,
+              tumor_area_px: data.tumor_area_px,
+            }),
+          });
+
+          if (upsertRes.ok) {
+            const updated = await upsertRes.json().catch(() => ({}));
+            // update currentHistoryId if server returned a history doc
+            if (updated && updated.history && updated.history._id) {
+              setCurrentHistoryId(updated.history._id);
+            }
+            addNotification({
+              type: 'success',
+              title: 'Analysis Complete',
+              message: `GM: ${data.gm_percent?.toFixed(2)}%, WM: ${data.wm_percent?.toFixed(2)}%, CSF: ${data.csf_percent?.toFixed(2)}%`,
+            });
+            // Broadcast update so dashboard refreshes
+            try {
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('patient-history-updated', { detail: { patientId } }));
+                try { const bc = new BroadcastChannel('patient-history'); bc.postMessage({ patientId }); bc.close(); } catch {}
+                try { localStorage.setItem('patient-history-updated', JSON.stringify({ patientId, ts: Date.now() })); } catch {}
+              }
+            } catch (e) {
+              console.warn('Failed to dispatch patient-history-updated event after upsert', e);
+            }
+            return true;
+          }
+          return false;
+        } catch (err) {
+          console.error('Error upserting history with volumetrics:', err);
+          return false;
+        }
+      };
+
+      let patched = false;
+      if (patientId) {
+        if (currentHistoryId) {
+          patched = await tryPatch(currentHistoryId);
+        }
+
+        // Fallback: fetch latest history entry and patch it
+        if (!patched) {
+          try {
+            const histRes = await fetch(`/api/patients/${patientId}/history`);
+            if (histRes.ok) {
+              const histData = await histRes.json().catch(() => ({}));
+              const latest = histData.history && histData.history.length > 0 ? histData.history[0] : null;
+              if (latest && latest._id) {
+                patched = await tryPatch(latest._id);
+              }
+            }
+          } catch (err) {
+            console.error('Failed to fetch history for fallback patch:', err);
+          }
+        }
+
+        if (!patched) {
+          console.warn('Unable to save clustering results to any history entry');
+          addNotification({ type: 'warning', title: 'Analysis saved locally', message: 'Results computed but could not be saved to patient history.' });
+        }
+      } else {
+        console.warn('No patientId available to save clustering results');
+      }
+    } catch (e: any) {
+      setClusteringErrors(prev => ({ ...prev, [key]: e?.message || 'Clustering failed' }));
+    } finally {
+      setClusteringLoading(prev => ({ ...prev, [key]: false }));
     }
   };
 
@@ -822,28 +1003,6 @@ function UploadPageContent() {
                         {/* Processed Image Display */}
                         {result.processed_image_base64 && (
                           <div className="bg-white rounded-lg p-4 space-y-3 border-2 border-green-200">
-                            <div className="flex items-center justify-between">
-                              <h5 className="font-semibold text-gray-900 flex items-center gap-2">
-                                <Eye className="w-4 h-4 text-blue-600" />
-                                Processed Image (256×256)
-                              </h5>
-                              <Button
-                                variant="primary"
-                                size="sm"
-                                onClick={() => {
-                                  // Download the processed image
-                                  const link = document.createElement('a');
-                                  link.href = result.processed_image_base64;
-                                  link.download = `${result.filename.replace(/\.[^/.]+$/, '')}_processed_256x256.png`;
-                                  document.body.appendChild(link);
-                                  link.click();
-                                  document.body.removeChild(link);
-                                }}
-                              >
-                                <Download className="w-4 h-4 mr-2" />
-                                Download Image
-                              </Button>
-                            </div>
                             <div className="flex justify-center bg-gray-50 rounded-lg p-4 border border-gray-200">
                               <img
                                 src={result.processed_image_base64}
@@ -852,9 +1011,240 @@ function UploadPageContent() {
                                 style={{ maxHeight: '400px', border: '2px solid #e5e7eb' }}
                               />
                             </div>
+                            <div className="flex items-center justify-between">
+                              <h5 className="font-semibold text-gray-900 flex items-center gap-2">
+                                <Eye className="w-4 h-4 text-blue-600" />
+                                Preprocessed Image (256×256)
+                              </h5>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  disabled={!!clusteringLoading[result.filename]}
+                                  onClick={() => runClustering(result)}
+                                >
+                                  <Cpu className="w-4 h-4 mr-2" />
+                                  {clusteringLoading[result.filename] ? 'Clustering...' : 'Run Clustering'}
+                                </Button>
+                                <Button
+                                  variant="primary"
+                                  size="sm"
+                                  onClick={() => {
+                                    const link = document.createElement('a');
+                                    link.href = result.processed_image_base64;
+                                    link.download = `${result.filename.replace(/\.[^/.]+$/, '')}_processed_256x256.png`;
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
+                                  }}
+                                >
+                                  <Download className="w-4 h-4 mr-2" />
+                                  Download Image
+                                </Button>
+                              </div>
+                            </div>
                             <p className="text-xs text-gray-500 text-center">
                               Preprocessed MRI image after all 6 processing steps (Resize, Grayscale, Denoising, Skull Stripping, Histogram Equalization, Normalization)
                             </p>
+
+                            {/* Clustering Output */}
+                            {(clusteringErrors[result.filename] || clusteringResults[result.filename]) && (
+                              <div className="mt-4 space-y-3">
+                                {clusteringErrors[result.filename] && (
+                                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                                    <strong>Clustering error:</strong> {clusteringErrors[result.filename]}
+                                  </div>
+                                )}
+
+                                {clusteringResults[result.filename] && (
+                                  <div className="space-y-4 border-t border-gray-200 pt-4">
+                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                      <h5 className="font-semibold text-gray-900 flex items-center gap-2">
+                                        <Cpu className="w-4 h-4 text-purple-600" />
+                                        Clustering-Based Detection Output
+                                      </h5>
+                                      {clusteringResults[result.filename]?.final_overlay_base64 && (
+                                        <Button
+                                          variant="primary"
+                                          size="sm"
+                                          onClick={() => {
+                                            const link = document.createElement('a');
+                                            link.href = clusteringResults[result.filename].final_overlay_base64;
+                                            link.download = `${result.filename.replace(/\.[^/.]+$/, '')}_kmeans_detection.png`;
+                                            document.body.appendChild(link);
+                                            link.click();
+                                            document.body.removeChild(link);
+                                          }}
+                                        >
+                                          <Download className="w-4 h-4 mr-2" />
+                                          Download Final
+                                        </Button>
+                                      )}
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                                      <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                                        <span className="text-gray-600 block mb-1">Tumor Area (pixels):</span>
+                                        <span className="font-semibold text-gray-900">
+                                          {clusteringResults[result.filename]?.tumor_area_px ?? 0}
+                                        </span>
+                                      </div>
+                                      <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                                        <span className="text-gray-600 block mb-1">Affected Region (%):</span>
+                                        <span className="font-semibold text-gray-900">
+                                          {typeof clusteringResults[result.filename]?.affected_percent === 'number'
+                                            ? `${clusteringResults[result.filename].affected_percent.toFixed(2)}%`
+                                            : '0.00%'}
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    {/* Volumetric Analysis Results */}
+                                    {(clusteringResults[result.filename]?.gm_percent !== undefined) && (
+                                      <div className="border-t border-gray-200 pt-4">
+                                        <h6 className="font-semibold text-gray-900 mb-3">Whole-Brain Soft Tissue Volumetric Analysis</h6>
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+                                          <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                                            <span className="text-blue-700 block text-xs font-medium mb-1">Gray Matter (GM)</span>
+                                            <span className="font-semibold text-blue-900 text-lg">
+                                              {clusteringResults[result.filename]?.gm_percent ?? 0}%
+                                            </span>
+                                            <span className="text-blue-600 text-xs block mt-1">
+                                              {clusteringResults[result.filename]?.gm_pixels ?? 0} px
+                                            </span>
+                                          </div>
+                                          <div className="bg-purple-50 rounded-lg p-3 border border-purple-200">
+                                            <span className="text-purple-700 block text-xs font-medium mb-1">White Matter (WM)</span>
+                                            <span className="font-semibold text-purple-900 text-lg">
+                                              {clusteringResults[result.filename]?.wm_percent ?? 0}%
+                                            </span>
+                                            <span className="text-purple-600 text-xs block mt-1">
+                                              {clusteringResults[result.filename]?.wm_pixels ?? 0} px
+                                            </span>
+                                          </div>
+                                          <div className="bg-cyan-50 rounded-lg p-3 border border-cyan-200">
+                                            <span className="text-cyan-700 block text-xs font-medium mb-1">CSF</span>
+                                            <span className="font-semibold text-cyan-900 text-lg">
+                                              {clusteringResults[result.filename]?.csf_percent ?? 0}%
+                                            </span>
+                                            <span className="text-cyan-600 text-xs block mt-1">
+                                              {clusteringResults[result.filename]?.csf_pixels ?? 0} px
+                                            </span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* Tumor Detection Status */}
+                                    {clusteringResults[result.filename]?.tumor_detected === false && (
+                                      <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-start gap-3">
+                                        <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                                        <div>
+                                          <p className="font-medium text-green-900">No Tumor Detected</p>
+                                          <p className="text-sm text-green-700 mt-1">No significant abnormal tissue regions were detected in this scan.</p>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                      {clusteringResults[result.filename]?.clustered_image_base64 && (
+                                        <div className="bg-white rounded-lg p-3 border border-gray-200">
+                                          <p className="text-sm font-medium text-gray-800 mb-2">Clustered Image</p>
+                                          <div className="bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center" style={{height: '300px'}}>
+                                            <img
+                                              src={clusteringResults[result.filename].clustered_image_base64}
+                                              alt="Clustered"
+                                              style={{objectFit: 'contain', maxWidth: '100%', maxHeight: '100%'}}
+                                            />
+                                          </div>
+                                        </div>
+                                      )}
+                                      {clusteringResults[result.filename]?.tumor_mask_base64 && (
+                                        <div className="bg-white rounded-lg p-3 border border-gray-200">
+                                          <p className="text-sm font-medium text-gray-800 mb-2">Cleaned Segmentation Mask</p>
+                                          <div className="bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center" style={{height: '300px'}}>
+                                            <img
+                                              src={clusteringResults[result.filename].tumor_mask_base64}
+                                              alt="Tumor mask"
+                                              style={{objectFit: 'contain', maxWidth: '100%', maxHeight: '100%'}}
+                                            />
+                                          </div>
+                                        </div>
+                                      )}
+                                      {clusteringResults[result.filename]?.final_overlay_base64 && (
+                                        <div className="bg-white rounded-lg p-3 border border-gray-200 lg:col-span-2">
+                                          <p className="text-sm font-medium text-gray-800 mb-2">Final ROI Detection (BBox)</p>
+                                          <div className="bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center" style={{height: '300px'}}>
+                                            <img
+                                              src={clusteringResults[result.filename].final_overlay_base64}
+                                              alt="Final detection"
+                                              style={{objectFit: 'contain', maxWidth: '100%', maxHeight: '100%'}}
+                                            />
+                                          </div>
+                                        </div>
+                                      )}
+                                      {clusteringResults[result.filename]?.roi_base64 && (
+                                        <div className="bg-white rounded-lg p-3 border border-gray-200 lg:col-span-2">
+                                          <p className="text-sm font-medium text-gray-800 mb-2">Extracted ROI (High-Quality from Original MRI)</p>
+                                          <div className="bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center" style={{height: '300px'}}>
+                                            <img
+                                              src={clusteringResults[result.filename].roi_base64}
+                                              alt="ROI"
+                                              style={{objectFit: 'contain', maxWidth: '100%', maxHeight: '100%'}}
+                                            />
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {/* Tissue Segmentation Masks */}
+                                      {(clusteringResults[result.filename]?.gm_mask_base64 || 
+                                        clusteringResults[result.filename]?.wm_mask_base64 || 
+                                        clusteringResults[result.filename]?.csf_mask_base64) && (
+                                        <>
+                                          <h6 className="text-sm font-semibold text-gray-900 col-span-1 lg:col-span-2 mt-2 mb-2">Tissue Segmentation Masks</h6>
+                                          {clusteringResults[result.filename]?.gm_mask_base64 && (
+                                            <div className="bg-white rounded-lg p-3 border border-blue-200 bg-blue-50">
+                                              <p className="text-sm font-medium text-blue-900 mb-2">Gray Matter (GM) Mask</p>
+                                              <div className="bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center" style={{height: '200px'}}>
+                                                <img
+                                                  src={clusteringResults[result.filename].gm_mask_base64}
+                                                  alt="GM Mask"
+                                                  style={{objectFit: 'contain', maxWidth: '100%', maxHeight: '100%'}}
+                                                />
+                                              </div>
+                                            </div>
+                                          )}
+                                          {clusteringResults[result.filename]?.wm_mask_base64 && (
+                                            <div className="bg-white rounded-lg p-3 border border-purple-200 bg-purple-50">
+                                              <p className="text-sm font-medium text-purple-900 mb-2">White Matter (WM) Mask</p>
+                                              <div className="bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center" style={{height: '200px'}}>
+                                                <img
+                                                  src={clusteringResults[result.filename].wm_mask_base64}
+                                                  alt="WM Mask"
+                                                  style={{objectFit: 'contain', maxWidth: '100%', maxHeight: '100%'}}
+                                                />
+                                              </div>
+                                            </div>
+                                          )}
+                                          {clusteringResults[result.filename]?.csf_mask_base64 && (
+                                            <div className="bg-white rounded-lg p-3 border border-cyan-200 bg-cyan-50">
+                                              <p className="text-sm font-medium text-cyan-900 mb-2">Cerebrospinal Fluid (CSF) Mask</p>
+                                              <div className="bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center" style={{height: '200px'}}>
+                                                <img
+                                                  src={clusteringResults[result.filename].csf_mask_base64}
+                                                  alt="CSF Mask"
+                                                  style={{objectFit: 'contain', maxWidth: '100%', maxHeight: '100%'}}
+                                                />
+                                              </div>
+                                            </div>
+                                          )}
+                                        </>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>

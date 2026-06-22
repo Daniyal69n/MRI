@@ -17,6 +17,12 @@ export interface IPatientHistory extends Document {
   status: 'completed' | 'failed' | 'partial';
   entries: IHistoryEntry[];
   notes?: string;
+  // Volumetric analysis results
+  gm_percent?: number;
+  wm_percent?: number;
+  csf_percent?: number;
+  tumor_detected?: boolean;
+  tumor_area_px?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -68,6 +74,30 @@ const PatientHistorySchema: Schema = new Schema(
       type: String,
       trim: true,
     },
+    // Volumetric analysis results
+    gm_percent: {
+      type: Number,
+      min: 0,
+      max: 100,
+    },
+    wm_percent: {
+      type: Number,
+      min: 0,
+      max: 100,
+    },
+    csf_percent: {
+      type: Number,
+      min: 0,
+      max: 100,
+    },
+    tumor_detected: {
+      type: Boolean,
+      default: false,
+    },
+    tumor_area_px: {
+      type: Number,
+      min: 0,
+    },
   },
   { timestamps: true }
 );
@@ -75,6 +105,10 @@ const PatientHistorySchema: Schema = new Schema(
 PatientHistorySchema.index({ patient: 1 });
 PatientHistorySchema.index({ uploadedBy: 1 });
 PatientHistorySchema.index({ visitDate: -1 });
+
+if (mongoose.models.PatientHistory && process.env.NODE_ENV !== 'production') {
+  delete mongoose.models.PatientHistory;
+}
 
 const PatientHistory: Model<IPatientHistory> =
   mongoose.models.PatientHistory ||

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import Patient from '@/models/Patient';
+import PatientHistory from '@/models/PatientHistory';
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,8 +22,22 @@ export async function GET(request: NextRequest) {
       .sort({ createdAt: -1 })
       .lean();
 
+    // Fetch analysis history for each patient and attach it
+    const patientsWithHistory = await Promise.all(
+      patients.map(async (patient) => {
+        const analysisHistory = await PatientHistory.find({ patient: patient._id })
+          .sort({ visitDate: -1 })
+          .lean();
+        
+        return {
+          ...patient,
+          analysisHistory: analysisHistory || [],
+        };
+      })
+    );
+
     return NextResponse.json(
-      { patients },
+      { patients: patientsWithHistory },
       { status: 200 }
     );
   } catch (error: any) {

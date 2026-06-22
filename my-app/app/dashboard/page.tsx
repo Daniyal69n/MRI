@@ -2,17 +2,20 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Upload, BarChart3, FileText, Activity, Loader2 } from 'lucide-react';
+import { Upload, BarChart3, FileText, Activity, Loader2, ChevronRight } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { PageHeader } from '@/components/dashboard/PageHeader';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { QuickActionButton } from '@/components/dashboard/QuickActionButton';
 import { DataTable } from '@/components/dashboard/DataTable';
 import { StatusBadge } from '@/components/dashboard/StatusBadge';
+import { Button } from '@/components/ui/Button';
 
 export default function DashboardPage() {
   const router = useRouter();
   const [showContent, setShowContent] = useState(false);
+  const [recentAnalyses, setRecentAnalyses] = useState<any[]>([]);
+  const [isLoadingAnalyses, setIsLoadingAnalyses] = useState(true);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -30,6 +33,123 @@ export default function DashboardPage() {
     }
     setShowContent(true);
   }, [router]);
+
+  // Fetch recent analyses on component mount
+  useEffect(() => {
+    const fetchRecentAnalyses = async () => {
+      try {
+        setIsLoadingAnalyses(true);
+        const response = await fetch('/api/patients');
+        if (!response.ok) throw new Error('Failed to fetch patients');
+
+        const data = await response.json();
+        const patients = data.patients || [];
+
+        // Transform patients with their latest analysis results
+        const analysesData = patients
+          .filter((patient: any) => patient.analysisHistory && patient.analysisHistory.length > 0)
+          .map((patient: any) => {
+            const latestAnalysis = patient.analysisHistory[0]; // First one is most recent (sorted by visitDate: -1)
+            return {
+              id: patient._id,
+              patientId: patient.patientId,
+              patient: `${patient.firstName} ${patient.lastName}`,
+              date: latestAnalysis.visitDate 
+                ? new Date(latestAnalysis.visitDate).toISOString().split('T')[0]
+                : new Date(patient.createdAt || new Date()).toISOString().split('T')[0],
+              status: latestAnalysis?.status === 'completed' ? 'Completed' : latestAnalysis?.status || 'Processing',
+              gm: latestAnalysis?.gm_percent !== undefined && latestAnalysis?.gm_percent !== null 
+                ? `${latestAnalysis.gm_percent.toFixed(2)}%` 
+                : '-',
+              wm: latestAnalysis?.wm_percent !== undefined && latestAnalysis?.wm_percent !== null 
+                ? `${latestAnalysis.wm_percent.toFixed(2)}%` 
+                : '-',
+              csf: latestAnalysis?.csf_percent !== undefined && latestAnalysis?.csf_percent !== null 
+                ? `${latestAnalysis.csf_percent.toFixed(2)}%` 
+                : '-',
+            };
+          })
+          .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+          .slice(0, 3); // Take only first 3 most recent
+
+        setRecentAnalyses(analysesData);
+      } catch (error) {
+        console.error('Error fetching analyses:', error);
+        setRecentAnalyses([]);
+      } finally {
+        setIsLoadingAnalyses(false);
+      }
+    };
+
+    if (showContent) {
+      fetchRecentAnalyses();
+    }
+  }, [showContent]);
+
+  // Listen for external updates (e.g., upload page patched a history)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handler = async (e: any) => {
+      try {
+        setIsLoadingAnalyses(true);
+        const resp = await fetch('/api/patients');
+        if (!resp.ok) throw new Error('Failed to fetch patients');
+        const data = await resp.json();
+        const patients = data.patients || [];
+        const analysesData = patients
+          .filter((patient: any) => patient.analysisHistory && patient.analysisHistory.length > 0)
+          .map((patient: any) => {
+            const latestAnalysis = patient.analysisHistory[0];
+            return {
+              id: patient._id,
+              patientId: patient.patientId,
+              patient: `${patient.firstName} ${patient.lastName}`,
+              date: latestAnalysis.visitDate ? new Date(latestAnalysis.visitDate).toISOString().split('T')[0] : new Date(patient.createdAt || new Date()).toISOString().split('T')[0],
+              status: latestAnalysis?.status === 'completed' ? 'Completed' : latestAnalysis?.status || 'Processing',
+              gm: latestAnalysis?.gm_percent !== undefined && latestAnalysis?.gm_percent !== null ? `${latestAnalysis.gm_percent.toFixed(2)}%` : '-',
+              wm: latestAnalysis?.wm_percent !== undefined && latestAnalysis?.wm_percent !== null ? `${latestAnalysis.wm_percent.toFixed(2)}%` : '-',
+              csf: latestAnalysis?.csf_percent !== undefined && latestAnalysis?.csf_percent !== null ? `${latestAnalysis.csf_percent.toFixed(2)}%` : '-',
+            };
+          })
+          .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+          .slice(0, 3);
+
+        setRecentAnalyses(analysesData);
+      } catch (err) {
+        console.error('Error refreshing analyses after update event:', err);
+      } finally {
+        setIsLoadingAnalyses(false);
+      }
+    };
+
+    // Same-window events
+    window.addEventListener('patient-history-updated', handler as EventListener);
+
+    // BroadcastChannel for cross-tab messaging
+    let bc: BroadcastChannel | null = null;
+    try {
+      bc = new BroadcastChannel('patient-history');
+      bc.addEventListener('message', handler as EventListener);
+    } catch (e) {
+      bc = null;
+    }
+
+    // localStorage fallback for older browsers / contexts
+    const storageHandler = (ev: StorageEvent) => {
+      if (ev.key === 'patient-history-updated') {
+        handler(ev);
+      }
+    };
+    window.addEventListener('storage', storageHandler as EventListener);
+
+    return () => {
+      window.removeEventListener('patient-history-updated', handler as EventListener);
+      if (bc) {
+        try { bc.removeEventListener('message', handler as EventListener); bc.close(); } catch {};
+      }
+      window.removeEventListener('storage', storageHandler as EventListener);
+    };
+  }, []);
 
   // Don't show Overview/Quick Actions until we know user is not admin (avoids flash for admin)
   if (!showContent) {
@@ -69,12 +189,6 @@ export default function DashboardPage() {
       color: 'bg-purple-500',
       trend: { value: '+2.1%', isPositive: true }
     },
-  ];
-
-  const recentAnalyses = [
-    { id: 1, patient: 'Patient #001', date: '2025-11-20', status: 'Completed', gm: '45.2%', wm: '38.7%', csf: '16.1%' },
-    { id: 2, patient: 'Patient #002', date: '2025-11-19', status: 'Completed', gm: '42.8%', wm: '40.1%', csf: '17.1%' },
-    { id: 3, patient: 'Patient #003', date: '2025-11-19', status: 'Processing', gm: '-', wm: '-', csf: '-' },
   ];
 
   const tableColumns = [
@@ -141,14 +255,37 @@ export default function DashboardPage() {
         title="Recent Analyses"
         subtitle="Latest volumetric analysis results"
       >
-        <DataTable
-          columns={tableColumns}
-          data={recentAnalyses}
-          actionButton={{
-            label: 'View',
-            href: (row) => `/dashboard/results/${row.id}`,
-          }}
-        />
+        {isLoadingAnalyses ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+            <span className="ml-2 text-gray-600">Loading analyses...</span>
+          </div>
+        ) : recentAnalyses.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-gray-600">No analyses found. Start by uploading an MRI image.</p>
+          </div>
+        ) : (
+          <>
+            <DataTable
+              columns={tableColumns}
+              data={recentAnalyses}
+              actionButton={{
+                label: 'View',
+                href: (row) => `/dashboard/patients/${row.id}`,
+              }}
+            />
+            <div className="mt-6 pt-4 border-t border-gray-200 flex justify-center">
+              <Button
+                variant="outline"
+                onClick={() => router.push('/dashboard/patients')}
+                className="flex items-center gap-2"
+              >
+                Explore More Patients
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </>
+        )}
       </Card>
     </div>
   );

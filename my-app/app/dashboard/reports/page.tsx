@@ -228,24 +228,7 @@ export default function ReportsPage() {
         </Card>
       )}
 
-      {/* Report Generation Info */}
-      <Card title="Report Information">
-        <div className="space-y-4 text-sm text-gray-600">
-          <p>
-            Reports include comprehensive volumetric analysis data including:
-          </p>
-          <ul className="list-disc list-inside space-y-2 ml-4">
-            <li>Detailed volumetric ratios for Gray Matter, White Matter, and CSF</li>
-            <li>Performance metrics (Dice Score, IoU, Accuracy, F1-Score)</li>
-            <li>Segmentation visualizations and overlays</li>
-            <li>Model performance comparisons</li>
-            <li>Statistical analysis and confidence intervals</li>
-          </ul>
-          <p className="pt-2">
-            Reports are generated in PDF format and can be downloaded for clinical documentation and research purposes.
-          </p>
-        </div>
-      </Card>
+      
     </div>
   );
 }

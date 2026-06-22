@@ -73,6 +73,7 @@ class PreprocessingPipeline:
             print("✓ Resized to 256x256")
             
             # Step 3: Convert to grayscale (if needed)
+            original_image_base64 = self._image_to_base64(image)
             image = convert_to_grayscale(image)
             print("✓ Converted to grayscale")
             
@@ -111,6 +112,7 @@ class PreprocessingPipeline:
                     "Histogram equalization",
                     "Intensity normalization (0-1)"
                 ],
+                "original_image_base64": original_image_base64,
                 "processed_image_path": processed_filename,
                 "processed_image_base64": processed_image_base64,  # Base64 encoded image for frontend
                 "timestamp": datetime.now().isoformat(),

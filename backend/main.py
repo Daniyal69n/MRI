@@ -6,12 +6,14 @@ Final Year Project: Brain Soft Tissue Volumetric Analysis System
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field
 import uvicorn
 import os
 from datetime import datetime
 from typing import Optional
 
 from preprocessing.pipeline import PreprocessingPipeline
+from tumor_detection.kmeans_roi import decode_data_url_image, cluster_and_extract_outputs
 from utils.file_handler import ensure_directories
 
 # Initialize FastAPI app
@@ -120,11 +122,54 @@ async def preprocess_image(
         )
 
 
+class ClusterRequest(BaseModel):
+    """
+    Request body for clustering on an already-preprocessed image.
+    The frontend can send `processed_image_base64` returned by /preprocess.
+    """
+
+    preprocessed_image_base64: str = Field(..., description="PNG data URL from preprocessing step")
+    original_image_base64: Optional[str] = Field(None, description="Original high-res image for high-quality ROI extraction")
+    k: int = Field(4, ge=2, le=8, description="Number of K-Means clusters (3 or 4 recommended)")
+    min_region_area_px: int = Field(80, ge=0, description="Remove connected components smaller than this area")
+    morph_kernel: int = Field(5, ge=1, le=31, description="Morphology kernel size (odd recommended)")
+    min_anomaly_area_px: int = Field(50, ge=0, description="Minimum anomaly area for positive detection (false-positive filter)")
+
+
+@app.post("/cluster")
+async def cluster_preprocessed(req: ClusterRequest):
+    """
+    Cluster a PREPROCESSED MRI image (grayscale PNG in base64 data-url form).
+
+    Returns:
+    - clustered image (base64)
+    - tumor candidate mask (base64)
+    - final overlay with bounding box (base64)
+    - ROI crop (base64 if found)
+    - bbox + tumor area + affected percentage
+    """
+    try:
+        gray_u8 = decode_data_url_image(req.preprocessed_image_base64)
+
+        outputs = cluster_and_extract_outputs(
+            preprocessed_gray_u8=gray_u8,
+            k=req.k,
+            min_region_area_px=req.min_region_area_px,
+            morph_kernel=req.morph_kernel,
+            original_image_base64=req.original_image_base64,
+            min_anomaly_area_px=req.min_anomaly_area_px,
+        )
+
+        return JSONResponse(content={"message": "Clustering completed", **outputs})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error clustering image: {str(e)}")
+
+
 if __name__ == "__main__":
     # Run the server
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=8000,
+        port=int(os.getenv("PORT", "8000")),
         reload=True  # Auto-reload on code changes (development mode)
     )

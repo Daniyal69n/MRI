@@ -94,29 +94,52 @@ def perform_skull_stripping(image: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     Returns:
         Tuple of (skull-stripped image, binary mask)
     """
-    # Step 1: Apply Otsu's thresholding to separate brain from background
-    # Otsu's method automatically determines optimal threshold
-    _, binary_mask = cv2.threshold(image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    
-    # Step 2: Morphological operations to clean up the mask
-    # Remove small noise
+    # Step 1: Smooth before thresholding to stabilize the mask.
+    blurred = cv2.GaussianBlur(image, (5, 5), sigmaX=0.8, sigmaY=0.8)
+
+    # Step 2: Otsu thresholding to separate foreground from background.
+    _, binary_mask = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
+    # Step 3: Morphological cleanup.
     kernel = np.ones((5, 5), np.uint8)
     binary_mask = cv2.morphologyEx(binary_mask, cv2.MORPH_CLOSE, kernel, iterations=2)
-    binary_mask = cv2.morphologyEx(binary_mask, cv2.MORPH_OPEN, kernel, iterations=2)
-    
-    # Step 3: Find the largest connected component (brain region)
+    binary_mask = cv2.morphologyEx(binary_mask, cv2.MORPH_OPEN, kernel, iterations=1)
+
+    # Step 4: Keep the best foreground component near the center and away from the border.
     num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(binary_mask, connectivity=8)
-    
     if num_labels > 1:
-        # Find largest component (excluding background)
-        largest_component = 1 + np.argmax(stats[1:, cv2.CC_STAT_AREA])
-        # Create mask with only largest component
-        brain_mask = (labels == largest_component).astype(np.uint8) * 255
+        height, width = image.shape[:2]
+        center_x, center_y = width / 2.0, height / 2.0
+        best_label = 1
+        best_score = -1.0
+
+        for label_index in range(1, num_labels):
+            area = float(stats[label_index, cv2.CC_STAT_AREA])
+            x = int(stats[label_index, cv2.CC_STAT_LEFT])
+            y = int(stats[label_index, cv2.CC_STAT_TOP])
+            w = int(stats[label_index, cv2.CC_STAT_WIDTH])
+            h = int(stats[label_index, cv2.CC_STAT_HEIGHT])
+            if area < 80:
+                continue
+
+            touches_border = x <= 1 or y <= 1 or (x + w) >= width - 1 or (y + h) >= height - 1
+            cx, cy = centroids[label_index]
+            center_distance = np.hypot(cx - center_x, cy - center_y)
+
+            score = area - (0.20 * center_distance)
+            if touches_border:
+                score -= 0.35 * area
+
+            if score > best_score:
+                best_score = score
+                best_label = label_index
+
+        brain_mask = (labels == best_label).astype(np.uint8) * 255
+        brain_mask = cv2.morphologyEx(brain_mask, cv2.MORPH_CLOSE, kernel, iterations=1)
     else:
-        # If no components found, use original mask
         brain_mask = binary_mask
-    
-    # Step 4: Apply mask to original image
+
+    # Step 5: Apply mask to original image.
     skull_stripped = cv2.bitwise_and(image, image, mask=brain_mask)
     
     return skull_stripped, brain_mask
