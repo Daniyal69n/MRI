@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Upload, FileImage, X, CheckCircle, User, ChevronRight, ChevronLeft, Download, Eye, Cpu } from 'lucide-react';
+import { Upload, FileImage, X, CheckCircle, User, ChevronRight, ChevronLeft, Download, Eye, Cpu, FileText } from 'lucide-react';
 import { addNotification } from '@/lib/notifications';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
