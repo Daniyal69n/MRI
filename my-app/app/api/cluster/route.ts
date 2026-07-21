@@ -5,7 +5,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-const FASTAPI_BACKEND_URL = process.env.FASTAPI_BACKEND_URL || 'https://mri-production-1faa.up.railway.app';
+const FASTAPI_BACKEND_URL =
+  process.env.FASTAPI_BACKEND_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  'https://mri-production-76b5.up.railway.app';
 
 export async function POST(request: NextRequest) {
   try {
