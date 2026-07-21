@@ -240,7 +240,12 @@ function UploadPageContent() {
         formData.append('denoise_method', 'gaussian'); // Can be made configurable
         
         // Call preprocessing API
-        const response = await fetch('/api/preprocess', {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+        if (!apiUrl) {
+          throw new Error('NEXT_PUBLIC_API_URL environment variable is not defined. Cannot connect to preprocessing service.');
+        }
+
+        const response = await fetch(`${apiUrl}/preprocess`, {
           method: 'POST',
           body: formData,
         });
