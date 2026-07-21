@@ -228,9 +228,9 @@ export default function DashboardPage() {
       <Card
         title="Quick Actions"
         subtitle="Access frequently used features"
-        className="bg-gradient-to-br from-blue-50/50 via-indigo-50/50 to-purple-50/50 border-blue-200/30"
+        className="bg-gradient-to-br from-slate-50/80 via-white/50 to-mri-blue/5 border-slate-200/50 backdrop-blur-md"
       >
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-5">
           <QuickActionButton
             href="/dashboard/upload"
             icon={Upload}
@@ -275,14 +275,14 @@ export default function DashboardPage() {
                 href: (row) => `/dashboard/patients/${row.id}`,
               }}
             />
-            <div className="mt-6 pt-4 border-t border-gray-200 flex justify-center">
+            <div className="mt-6 pt-5 border-t border-slate-200/50 flex justify-center">
               <Button
                 variant="outline"
                 onClick={() => router.push('/dashboard/patients')}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 px-6 py-2.5 rounded-full hover:bg-slate-100/50 bg-white shadow-sm hover:shadow-md transition-all duration-300"
               >
-                Explore More Patients
-                <ChevronRight className="w-4 h-4" />
+                <span className="font-semibold text-slate-700">Explore More Patients</span>
+                <ChevronRight className="w-4 h-4 text-mri-blue" />
               </Button>
             </div>
           </>

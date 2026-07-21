@@ -134,18 +134,19 @@ export const Sidebar = () => {
         }`}
       />
       <aside
-        className={`fixed md:relative inset-y-0 left-0 z-50 w-64 flex-shrink-0 bg-gradient-to-b from-gray-900 to-gray-800 text-white min-h-screen flex flex-col shadow-2xl transition-transform duration-200 ease-out md:translate-x-0 ${
+        className={`fixed md:relative inset-y-0 left-0 z-50 w-64 flex-shrink-0 bg-slate-900 border-r border-slate-800 text-slate-100 min-h-screen flex flex-col shadow-[4px_0_24px_rgba(0,0,0,0.3)] transition-transform duration-300 ease-out md:translate-x-0 ${
           open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
       >
-        <div className="p-4 sm:p-6 border-b border-gray-700 flex items-center justify-between">
+        <div className="p-5 sm:p-6 border-b border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
-              <Brain className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 bg-gradient-to-br from-mri-blue to-mri-cyan rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(2,195,154,0.4)] flex-shrink-0 relative overflow-hidden">
+              <div className="absolute inset-0 bg-white/20 animate-pulse-glow" />
+              <Brain className="w-6 h-6 text-white relative z-10" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-lg font-bold text-white truncate">Brain Analysis</h1>
-              <p className="text-xs text-gray-400">Volumetric System</p>
+              <h1 className="text-lg font-extrabold text-white truncate tracking-tight">Brain Analysis</h1>
+              <p className="text-xs text-mri-cyan font-medium tracking-widest uppercase">Volumetric</p>
             </div>
           </div>
           <button
@@ -178,14 +179,22 @@ export const Sidebar = () => {
                     <Link
                       href={item.href}
                       onClick={close}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 relative group overflow-hidden ${
                         isActive
-                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30'
-                          : 'text-gray-300 hover:bg-gray-800/50 hover:text-white hover:translate-x-1'
+                          ? 'text-white'
+                          : 'text-slate-400 hover:text-white hover:translate-x-1'
                       }`}
                     >
-                      <Icon className="w-5 h-5 flex-shrink-0" />
-                      <span className="font-medium">{item.label}</span>
+                      {isActive && (
+                        <div className="absolute inset-0 bg-gradient-to-r from-mri-blue/40 to-mri-cyan/10 border-l-4 border-mri-cyan shadow-[inset_4px_0_10px_rgba(2,195,154,0.3)]" />
+                      )}
+                      {!isActive && (
+                        <div className="absolute inset-0 bg-slate-800/0 group-hover:bg-slate-800/50 transition-colors duration-300" />
+                      )}
+                      <div className="relative z-10 flex items-center gap-3 w-full">
+                        <Icon className="w-5 h-5 flex-shrink-0" />
+                        <span className="font-medium">{item.label}</span>
+                      </div>
                     </Link>
                   </li>
                 );

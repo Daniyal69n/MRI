@@ -18,10 +18,10 @@ export const Button: React.FC<ButtonProps> = ({
   const baseStyles = 'font-semibold rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation min-h-[44px] sm:min-h-0';
   
   const variants = {
-    primary: 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 focus:ring-blue-500 shadow-md hover:shadow-lg hover:scale-105 active:scale-95',
-    secondary: 'bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500 shadow-md hover:shadow-lg hover:scale-105 active:scale-95',
-    outline: 'border-2 border-blue-600 text-blue-600 hover:bg-blue-50 hover:border-blue-700 focus:ring-blue-500 hover:scale-105 active:scale-95',
-    ghost: 'text-gray-700 hover:bg-gray-100 focus:ring-gray-500 hover:scale-105 active:scale-95',
+    primary: 'bg-gradient-to-r from-mri-blue to-mri-teal text-white hover:from-blue-700 hover:to-teal-600 shadow-[0_4px_14px_0_rgba(0,43,91,0.39)] hover:shadow-[0_6px_20px_rgba(0,168,150,0.23)] hover:-translate-y-0.5',
+    secondary: 'bg-slate-700 text-white hover:bg-slate-600 shadow-md hover:shadow-lg hover:-translate-y-0.5',
+    outline: 'border border-mri-blue/50 text-mri-blue bg-white/50 backdrop-blur-sm hover:bg-mri-blue/5 hover:border-mri-blue hover:shadow-[0_0_15px_rgba(0,43,91,0.2)] hover:-translate-y-0.5',
+    ghost: 'text-slate-600 hover:text-mri-blue hover:bg-slate-100/50 hover:-translate-y-0.5',
   };
   
   const sizes = {

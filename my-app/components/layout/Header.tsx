@@ -130,7 +130,7 @@ export const Header = () => {
   const toggleSidebar = () => window.dispatchEvent(new CustomEvent('toggleSidebar'));
 
   return (
-    <header className="bg-white border-b border-gray-200/80 backdrop-blur-sm sticky top-0 z-30">
+    <header className="glass-panel-dark sticky top-0 z-30 border-b border-slate-700/50 bg-slate-900/80 backdrop-blur-xl">
       <div className="px-4 sm:px-6 lg:px-8 py-3 sm:py-4 lg:py-5">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -138,7 +138,7 @@ export const Header = () => {
               type="button"
               onClick={toggleSidebar}
               aria-label="Open menu"
-              className="md:hidden p-2 -ml-2 rounded-xl text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+              className="md:hidden p-2 -ml-2 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
             >
               <Menu className="w-6 h-6" />
             </button>

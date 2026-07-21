@@ -3,8 +3,15 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f8fafc; /* slate-50 */
+  --foreground: #0f172a; /* slate-900 */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0f172a; /* slate-900 */
+    --foreground: #f8fafc; /* slate-50 */
+  }
 }
 
 * {
@@ -26,4 +33,27 @@ body {
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
   min-height: 100vh;
+}
+
+/* Custom Utilities for Premium Medical UI */
+@layer utilities {
+  .glass-panel {
+    @apply bg-white/70 backdrop-blur-md border border-white/40 shadow-lg;
+  }
+  
+  .glass-panel-dark {
+    @apply bg-slate-900/70 backdrop-blur-md border border-slate-700/50 shadow-lg;
+  }
+  
+  .text-gradient-medical {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-mri-blue via-mri-glow to-mri-cyan;
+  }
+  
+  .hover-lift {
+    @apply transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl;
+  }
+  
+  .glow-border {
+    @apply relative after:absolute after:-inset-0.5 after:bg-gradient-to-r after:from-mri-cyan after:to-mri-glow after:rounded-xl after:blur after:opacity-0 hover:after:opacity-50 after:transition-opacity after:duration-500 after:-z-10;
+  }
 }

@@ -6,10 +6,10 @@ interface StatusBadgeProps {
 
 export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
   const statusStyles = {
-    Completed: 'bg-green-100 text-green-800 border-green-200',
-    Processing: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    Pending: 'bg-gray-100 text-gray-800 border-gray-200',
-    Failed: 'bg-red-100 text-red-800 border-red-200',
+    Completed: 'bg-emerald-100/80 text-emerald-700 border-emerald-200/50 shadow-[0_0_10px_rgba(16,185,129,0.2)]',
+    Processing: 'bg-amber-100/80 text-amber-700 border-amber-200/50 shadow-[0_0_10px_rgba(245,158,11,0.2)] animate-pulse',
+    Pending: 'bg-slate-100/80 text-slate-700 border-slate-200/50',
+    Failed: 'bg-rose-100/80 text-rose-700 border-rose-200/50 shadow-[0_0_10px_rgba(244,63,94,0.2)]',
   };
 
   return (

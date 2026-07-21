@@ -16,21 +16,21 @@ export const Card: React.FC<CardProps> = ({
   headerAction,
 }) => {
   return (
-    <div className={`bg-white rounded-xl sm:rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden ${className}`}>
+    <div className={`glass-panel rounded-2xl transition-all duration-300 overflow-hidden ${className}`}>
       {(title || subtitle || headerAction) && (
-        <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-gray-100 bg-gradient-to-r from-gray-50/50 to-white">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="px-5 sm:px-7 py-4 sm:py-6 border-b border-white/20 bg-gradient-to-r from-slate-50/50 to-transparent backdrop-blur-md">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="min-w-0">
-              <h3 className="text-base sm:text-lg font-semibold text-gray-900">{title}</h3>
+              <h3 className="text-lg sm:text-xl font-bold text-slate-800">{title}</h3>
               {subtitle && (
-                <p className="text-xs sm:text-sm text-gray-500 mt-1">{subtitle}</p>
+                <p className="text-sm text-slate-500 mt-1">{subtitle}</p>
               )}
             </div>
             {headerAction && <div className="flex-shrink-0">{headerAction}</div>}
           </div>
         </div>
       )}
-      <div className="p-4 sm:p-6">{children}</div>
+      <div className="p-5 sm:p-7">{children}</div>
     </div>
   );
 };

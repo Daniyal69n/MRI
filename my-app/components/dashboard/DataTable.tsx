@@ -28,27 +28,27 @@ export const DataTable: React.FC<DataTableProps> = ({
     <div className="overflow-x-auto -mx-4 -my-4 sm:-mx-6 sm:-my-6">
       <table className="w-full min-w-[640px]">
         <thead>
-          <tr className="border-b border-gray-200 bg-gradient-to-r from-gray-50/80 to-gray-100/80 backdrop-blur-sm">
+          <tr className="border-b border-slate-200/50 bg-gradient-to-r from-slate-50/50 to-slate-100/50 backdrop-blur-md">
             {columns.map((column) => (
               <th
                 key={column.key}
-                className="text-left py-3 px-3 sm:py-4 sm:px-6 text-xs font-bold text-gray-700 uppercase tracking-wider"
+                className="text-left py-4 px-4 sm:py-5 sm:px-6 text-xs font-bold text-slate-500 uppercase tracking-widest"
               >
                 {column.label}
               </th>
             ))}
             {actionButton && (
-              <th className="text-left py-3 px-3 sm:py-4 sm:px-6 text-xs font-bold text-gray-700 uppercase tracking-wider">
+              <th className="text-left py-4 px-4 sm:py-5 sm:px-6 text-xs font-bold text-slate-500 uppercase tracking-widest">
                 Actions
               </th>
             )}
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-100">
+        <tbody className="bg-white/50 divide-y divide-slate-100/50 backdrop-blur-sm">
           {data.map((row, index) => (
             <tr
               key={row.id || index}
-              className="border-b border-gray-100/50 hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-indigo-50/50 transition-all duration-200 group"
+              className="border-b border-slate-100/50 hover:bg-white/80 hover:shadow-sm transition-all duration-300 group"
             >
               {columns.map((column) => (
                 <td key={column.key} className="py-3 px-3 sm:py-4 sm:px-6 text-sm whitespace-nowrap">
