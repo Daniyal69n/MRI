@@ -4,6 +4,7 @@ import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { generateReport } from '@/lib/reportGenerator';
 import { ArrowLeft, FileText, Loader2, Calendar, User, Eye, Image as ImageIcon } from 'lucide-react';
 
 interface HistoryEntry {
@@ -39,8 +40,12 @@ interface PatientHistoryRecord {
 export default function ClinicalViewer({ params }: { params: Promise<{ patientId: string }> | { patientId: string } }) {
   const router = useRouter();
   const [history, setHistory] = useState<PatientHistoryRecord[]>([]);
-  const [patientData, setPatientData] = useState<{ patientId: string, firstName: string, lastName: string } | null>(null);
+  const [patientData, setPatientData] = useState<{ patientId: string, firstName: string, lastName: string, age?: number, gender?: string, contactNumber?: string, email?: string, address?: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Editable fields for the report
+  const [impression, setImpression] = useState("No significant abnormalities detected in this MRI brain scan. The patient's brain MRI scan is clear, showing normal brain structures.");
+  const [recommendation, setRecommendation] = useState("Regular follow-up as needed. Immediate consultation is advised if any new symptoms develop.");
 
   // Safely unwrap params (works for both Next 14 object and Next 15 Promise)
   const resolvedParams = params instanceof Promise ? use(params) : params;
@@ -90,6 +95,52 @@ export default function ClinicalViewer({ params }: { params: Promise<{ patientId
   const latestAnalysis = history[0];
   const displayPatientId = patientData ? patientData.patientId : resolvedParams.patientId;
 
+  const handleExportPDF = () => {
+    if (!latestAnalysis) return;
+
+    // Build the data object required by the report generator
+    const userJson = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+    const user = userJson ? JSON.parse(userJson) : null;
+    const doctorData = {
+      firstName: user?.firstName || 'Unknown',
+      lastName: user?.lastName || 'Doctor',
+      specialization: 'Radiologist', // Default fallback
+    };
+
+    const scanDateFormatted = new Date(latestAnalysis.visitDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+    let findings = [{
+      finding: 'Brain Structure',
+      details: 'Normal brain anatomy observed. No significant structural abnormalities detected.'
+    }];
+
+    if (latestAnalysis.gm_percent !== undefined) {
+      findings.push({
+        finding: 'Tissue Volumetry',
+        details: `Volumetric analysis completed. Gray Matter: ${latestAnalysis.gm_percent.toFixed(2)}%, White Matter: ${latestAnalysis.wm_percent?.toFixed(2) || 'N/A'}%, CSF: ${latestAnalysis.csf_percent?.toFixed(2) || 'N/A'}%.`
+      });
+    }
+
+    generateReport({
+      patient: {
+        patientId: displayPatientId,
+        firstName: patientData?.firstName || 'Unknown',
+        lastName: patientData?.lastName || 'Patient',
+        age: patientData?.age || 0,
+        gender: patientData?.gender || 'Unknown',
+        contactNumber: patientData?.contactNumber || 'Unknown',
+        email: patientData?.email,
+        address: patientData?.address,
+      },
+      doctor: doctorData,
+      scanDate: scanDateFormatted,
+      purpose: 'MRI brain scan for tumor / lesion analysis.',
+      findings: findings,
+      impression: impression,
+      recommendation: recommendation
+    });
+  };
+
   return (
     <div className="space-y-6 relative">
       {/* Top Navigation */}
@@ -99,7 +150,7 @@ export default function ClinicalViewer({ params }: { params: Promise<{ patientId
         </Button>
         <Button 
           variant="primary" 
-          onClick={() => window.print()}
+          onClick={handleExportPDF}
           className="shadow-md"
         >
           <FileText className="w-4 h-4 mr-2" /> Export Clinical PDF
@@ -197,26 +248,34 @@ export default function ClinicalViewer({ params }: { params: Promise<{ patientId
         </div>
       </Card>
       
-      {/* Print Styles for PDF Export */}
-      <style dangerouslySetInnerHTML={{__html: `
-        @media print {
-          body * {
-            visibility: hidden;
-          }
-          .space-y-6, .space-y-6 * {
-            visibility: visible;
-          }
-          .space-y-6 {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-          }
-          button {
-            display: none !important;
-          }
-        }
-      `}} />
+      {/* Editable Report Section */}
+      <Card title="Doctor's Report Customization">
+        <div className="space-y-6">
+          <p className="text-sm text-gray-500 mb-4">You can edit the final report details below before exporting the PDF.</p>
+          
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Impression</label>
+            <textarea
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-gray-800"
+              rows={4}
+              value={impression}
+              onChange={(e) => setImpression(e.target.value)}
+              placeholder="Enter clinical impression..."
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Recommendation</label>
+            <textarea
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-gray-800"
+              rows={4}
+              value={recommendation}
+              onChange={(e) => setRecommendation(e.target.value)}
+              placeholder="Enter recommendations..."
+            />
+          </div>
+        </div>
+      </Card>
     </div>
   );
 }

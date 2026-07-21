@@ -146,110 +146,90 @@ export function generateReport(data: ReportData): void {
   // MRI Brain Findings
   yPosition += 5;
   doc.setFillColor(230, 240, 255);
-  doc.rect(20, yPosition, pageWidth - 40, 15, 'F');
+  doc.rect(20, yPosition, pageWidth - 40, 10, 'F');
   
-  doc.setFontSize(11);
+  doc.setFontSize(10);
   doc.setFont('helvetica', 'bold');
-  doc.text('MRI Brain Findings', 25, yPosition + 8);
-  yPosition += 20;
+  doc.text('MRI Brain Findings', 25, yPosition + 7);
+  yPosition += 15;
 
   if (data.findings && data.findings.length > 0) {
     // Table header
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.setFont('helvetica', 'bold');
     doc.text('Findings', 25, yPosition);
     doc.text('Details', pageWidth / 2, yPosition);
-    yPosition += 6;
+    yPosition += 4;
     doc.line(25, yPosition, pageWidth - 25, yPosition);
-    yPosition += 5;
+    yPosition += 4;
 
     // Table rows
     doc.setFont('helvetica', 'normal');
     data.findings.forEach((finding) => {
-      if (yPosition > pageHeight - 30) {
-        doc.addPage();
-        yPosition = 20;
-      }
-      
       const findingLines = doc.splitTextToSize(finding.finding, (pageWidth / 2) - 35);
       const detailsLines = doc.splitTextToSize(finding.details, (pageWidth / 2) - 35);
       const maxLines = Math.max(findingLines.length, detailsLines.length);
       
       doc.text(findingLines, 25, yPosition);
       doc.text(detailsLines, pageWidth / 2, yPosition);
-      yPosition += maxLines * 5 + 3;
+      yPosition += maxLines * 4 + 2;
     });
   } else {
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
     doc.text('No significant findings recorded.', 25, yPosition);
-    yPosition += 8;
+    yPosition += 6;
   }
 
-  yPosition += 5;
+  yPosition += 4;
 
   // Impression Section
-  if (yPosition > pageHeight - 40) {
-    doc.addPage();
-    yPosition = 20;
-  }
-
-  doc.setFontSize(11);
+  doc.setFontSize(10);
   doc.setFont('helvetica', 'bold');
   doc.text('Impression:', 20, yPosition);
-  yPosition += 6;
+  yPosition += 5;
   
-  doc.setFontSize(10);
+  doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
   const impressionLines = doc.splitTextToSize(data.impression, pageWidth - 40);
   doc.text(impressionLines, 20, yPosition);
-  yPosition += impressionLines.length * 5 + 8;
+  yPosition += impressionLines.length * 4 + 6;
 
   // Recommendation Section
-  if (yPosition > pageHeight - 40) {
-    doc.addPage();
-    yPosition = 20;
-  }
-
-  doc.setFontSize(11);
+  doc.setFontSize(10);
   doc.setFont('helvetica', 'bold');
   doc.text('Recommendation:', 20, yPosition);
-  yPosition += 6;
+  yPosition += 5;
   
-  doc.setFontSize(10);
+  doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
   const recommendationLines = doc.splitTextToSize(data.recommendation, pageWidth - 40);
   doc.text(recommendationLines, 20, yPosition);
-  yPosition += recommendationLines.length * 5 + 15;
+  yPosition += recommendationLines.length * 4 + 10;
 
   // Medical Officer Section
-  if (yPosition > pageHeight - 50) {
-    doc.addPage();
-    yPosition = 20;
-  }
-
-  doc.setFontSize(11);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Medical Officer Information:', 20, yPosition);
-  yPosition += 8;
-
   doc.setFontSize(10);
   doc.setFont('helvetica', 'bold');
-  doc.text(`Dr. ${data.doctor.firstName} ${data.doctor.lastName}`, 20, yPosition);
+  doc.text('Medical Officer Information:', 20, yPosition);
   yPosition += 6;
+
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`Dr. ${data.doctor.firstName} ${data.doctor.lastName}`, 20, yPosition);
+  yPosition += 5;
   
   doc.setFont('helvetica', 'normal');
   if (data.doctor.specialization) {
     doc.text(data.doctor.specialization, 20, yPosition);
-    yPosition += 6;
+    yPosition += 5;
   }
   
   if (data.doctor.pmdcNumber) {
     doc.text(`PMDC No: ${data.doctor.pmdcNumber}`, 20, yPosition);
-    yPosition += 6;
+    yPosition += 5;
   }
 
-  yPosition += 8;
+  yPosition += 10;
   doc.text('Signature: ___________________', 20, yPosition);
 
   // Save the PDF
