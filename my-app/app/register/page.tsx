@@ -107,19 +107,19 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4 sm:p-6 overflow-x-hidden">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-5 sm:p-8">
+    <div className="min-h-screen bg-[#090c11] text-[#e7ebf1] font-sans flex items-center justify-center p-4 sm:p-6 py-12 overflow-x-hidden bg-hero-glow">
+      <div className="w-full max-w-2xl">
+        <div className="bg-[#10151d] border border-[#232b38] rounded-xl sm:rounded-2xl shadow-[0_30px_60px_-30px_rgba(0,0,0,0.6)] p-5 sm:p-8 glass-panel-dark glow-border relative z-10">
           <div className="text-center mb-6 sm:mb-8">
             <div className="flex justify-center mb-3 sm:mb-4">
-              <div className="bg-blue-100 p-3 rounded-full">
-                <Brain className="w-7 h-7 sm:w-8 sm:h-8 text-blue-600" />
+              <div className="bg-tissue-csf/10 p-3 rounded-full shadow-[0_0_15px_rgba(82,232,212,0.3)]">
+                <Brain className="w-7 h-7 sm:w-8 sm:h-8 text-tissue-csf" />
               </div>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
               Create Account
             </h1>
-            <p className="text-sm sm:text-base text-gray-600">Register as a researcher</p>
+            <p className="text-sm sm:text-base text-[#8c96a8]">Register as a researcher</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
@@ -180,28 +180,26 @@ export default function RegisterPage() {
             />
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Specialization <span className="text-red-500">*</span>
+              <label className="block text-sm font-medium text-[#8c96a8] mb-1">
+                Specialization <span className="text-[#ff6b6b]">*</span>
               </label>
               <select
                 name="specialization"
                 value={formData.specialization}
                 onChange={handleChange}
-                className={`w-full px-4 py-2.5 sm:py-2 min-h-[44px] sm:min-h-0 text-base border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors.specialization ? 'border-red-500' : 'border-gray-300'
+                className={`w-full px-4 py-2.5 sm:py-2 min-h-[44px] sm:min-h-0 text-base border rounded-lg bg-[#090c11]/50 text-[#e7ebf1] focus:outline-none focus:ring-2 focus:ring-tissue-csf focus:border-transparent transition-all shadow-inner ${
+                  errors.specialization ? 'border-[#ff6b6b] focus:ring-[#ff6b6b]' : 'border-[#232b38] hover:border-[#5b6576]'
                 }`}
                 required
               >
-                <option value="">Select Specialization</option>
-                <option value="Medical Officer">Medical Officer</option>
-                
-                <option value="Radiologist">Radiologist</option>
-                <option value="Neurologist">Neurologist</option>
-                <option value="Researcher">Researcher</option>
-                
+                <option value="" className="bg-[#10151d]">Select Specialization</option>
+                <option value="Medical Officer" className="bg-[#10151d]">Medical Officer</option>
+                <option value="Radiologist" className="bg-[#10151d]">Radiologist</option>
+                <option value="Neurologist" className="bg-[#10151d]">Neurologist</option>
+                <option value="Researcher" className="bg-[#10151d]">Researcher</option>
               </select>
               {errors.specialization && (
-                <p className="mt-1 text-sm text-red-600">{errors.specialization}</p>
+                <p className="mt-1 text-sm text-[#ff6b6b]">{errors.specialization}</p>
               )}
             </div>
 
@@ -229,7 +227,7 @@ export default function RegisterPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-9 text-gray-500 hover:text-gray-700 focus:outline-none"
+                className="absolute right-3 top-9 text-[#8c96a8] hover:text-[#e7ebf1] focus:outline-none transition-colors"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
@@ -241,40 +239,37 @@ export default function RegisterPage() {
             </div>
 
             {errors.general && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+              <div className="bg-[#ff6b6b]/10 border border-[#ff6b6b]/30 text-[#ff6b6b] px-4 py-3 rounded-lg text-sm">
                 {errors.general}
               </div>
             )}
 
-            <Button 
-              type="submit" 
-              variant="primary" 
-              size="lg" 
-              className="w-full"
-              disabled={isLoading}
-            >
-              {isLoading ? 'Creating Account...' : 'Create Account'}
-            </Button>
+            <div className="pt-2">
+              <Button 
+                type="submit" 
+                className="w-full font-mono text-[13.5px] px-[22px] py-[13px] rounded-[3px] border border-tissue-csf bg-tissue-csf text-[#04211d] font-medium hover:bg-[#6ef0de] hover:border-[#6ef0de] hover:-translate-y-[1px] transition-all shadow-[0_0_15px_rgba(82,232,212,0.4)]"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Creating Account...' : 'Create Account'}
+              </Button>
+            </div>
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-[#8c96a8]">
               Already have an account?{' '}
-              <Link href="/login" className="text-blue-600 hover:text-blue-700 font-medium">
+              <Link href="/login" className="text-tissue-csf hover:text-[#6ef0de] font-medium transition-colors">
                 Sign in
               </Link>
             </p>
           </div>
 
           <div className="mt-4 text-center">
-            <Link href="/" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+            <Link href="/" className="text-sm text-[#5b6576] hover:text-[#8c96a8] font-medium transition-colors">
               ← Back to Home
             </Link>
           </div>
         </div>
-
-        
-        
       </div>
     </div>
   );

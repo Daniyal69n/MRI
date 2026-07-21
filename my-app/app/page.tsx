@@ -50,7 +50,7 @@ export default function Home() {
               Automated segmentation and volumetric quantification of gray matter, white matter, and CSF — from raw MRI to a report-ready dataset, without manual tracing.
             </p>
             <div className="flex gap-3.5 flex-wrap mb-9">
-              <Link href="/dashboard" className="font-mono text-[13.5px] px-[22px] py-[13px] rounded-[3px] border border-tissue-csf bg-tissue-csf text-[#04211d] font-medium hover:bg-[#6ef0de] hover:border-[#6ef0de] hover:-translate-y-[1px] transition-all shadow-[0_0_15px_rgba(82,232,212,0.4)]">
+              <Link href="/login" className="font-mono text-[13.5px] px-[22px] py-[13px] rounded-[3px] border border-tissue-csf bg-tissue-csf text-[#04211d] font-medium hover:bg-[#6ef0de] hover:border-[#6ef0de] hover:-translate-y-[1px] transition-all shadow-[0_0_15px_rgba(82,232,212,0.4)]">
                 Access Dashboard →
               </Link>
               <Link href="/register" className="font-mono text-[13.5px] px-[22px] py-[13px] rounded-[3px] border border-[#232b38] hover:border-tissue-csf hover:-translate-y-[1px] transition-all text-[#e7ebf1]">
@@ -60,7 +60,7 @@ export default function Home() {
             <div className="flex gap-[34px] flex-wrap font-mono">
               <div><span className="text-[20px] text-[#e7ebf1] block font-medium">3</span><span className="text-[11.5px] text-[#5b6576] tracking-wide uppercase">Tissue Classes</span></div>
               <div><span className="text-[20px] text-[#e7ebf1] block font-medium">&lt;90s</span><span className="text-[11.5px] text-[#5b6576] tracking-wide uppercase">Per Volume</span></div>
-              <div><span className="text-[20px] text-[#e7ebf1] block font-medium">CNN</span><span className="text-[11.5px] text-[#5b6576] tracking-wide uppercase">+ Decision Tree</span></div>
+              <div><span className="text-[20px] text-[#e7ebf1] block font-medium">FCM</span><span className="text-[11.5px] text-[#5b6576] tracking-wide uppercase">Clustering</span></div>
             </div>
           </div>
 
@@ -134,8 +134,8 @@ export default function Home() {
               <div className="bg-[#10151d] border border-[#232b38] rounded-md p-6 pt-[26px] hover:border-tissue-gm hover:-translate-y-1 transition-all duration-300 shadow-lg glow-border">
                 <div className="font-mono text-[12px] text-[#090c11] bg-tissue-csf w-[28px] h-[28px] rounded-full flex items-center justify-center mb-5 font-medium">02</div>
                 <h3 className="font-bold text-[18px] mb-2.5">Tissue Classification</h3>
-                <p className="text-[#8c96a8] text-[14px] leading-[1.6] mb-4">CNN and decision-tree models label each voxel as gray matter, white matter, or CSF with clinical-grade consistency.</p>
-                <span className="inline-block font-mono text-[10.5px] text-[#5b6576] border border-[#232b38] rounded-full px-2.5 py-1">MODEL · CNN + DT</span>
+                <p className="text-[#8c96a8] text-[14px] leading-[1.6] mb-4">Fuzzy C-Means clustering robustly labels each voxel as gray matter, white matter, or CSF with clinical-grade consistency.</p>
+                <span className="inline-block font-mono text-[10.5px] text-[#5b6576] border border-[#232b38] rounded-full px-2.5 py-1">MODEL · FCM Clustering</span>
               </div>
               <div className="bg-[#10151d] border border-[#232b38] rounded-md p-6 pt-[26px] hover:border-tissue-gm hover:-translate-y-1 transition-all duration-300 shadow-lg glow-border">
                 <div className="font-mono text-[12px] text-[#090c11] bg-tissue-csf w-[28px] h-[28px] rounded-full flex items-center justify-center mb-5 font-medium">03</div>
@@ -161,7 +161,7 @@ export default function Home() {
             <div className="p-10 border-b md:border-b-0 md:border-r border-[#232b38]">
               <h3 className="font-bold text-[22px] mb-3.5">Standardized, comparable, exportable.</h3>
               <p className="text-[#8c96a8] text-[14.5px] leading-[1.65] mb-6">Volumes are computed in absolute terms and normalized against reference ranges, so results stay comparable across scanners, sites, and follow-up visits.</p>
-              <Link href="/dashboard" className="font-mono text-[13px] px-[16px] py-[9px] rounded-[3px] border border-tissue-csf bg-tissue-csf text-[#04211d] font-medium hover:bg-[#6ef0de] hover:border-[#6ef0de] hover:-translate-y-[1px] transition-all inline-flex items-center gap-2">
+              <Link href="/login" className="font-mono text-[13px] px-[16px] py-[9px] rounded-[3px] border border-tissue-csf bg-tissue-csf text-[#04211d] font-medium hover:bg-[#6ef0de] hover:border-[#6ef0de] hover:-translate-y-[1px] transition-all inline-flex items-center gap-2">
                 Access Dashboard →
               </Link>
             </div>
@@ -203,7 +203,7 @@ export default function Home() {
             <Link href="/register" className="font-mono text-[13px] px-[16px] py-[9px] rounded-[3px] border border-tissue-csf bg-tissue-csf text-[#04211d] font-medium hover:bg-[#6ef0de] hover:border-[#6ef0de] hover:-translate-y-[1px] transition-all">
               Create Account
             </Link>
-            <Link href="/dashboard" className="font-mono text-[13px] px-[16px] py-[9px] rounded-[3px] border border-[#232b38] hover:border-tissue-csf hover:-translate-y-[1px] transition-all text-[#e7ebf1]">
+            <Link href="/login" className="font-mono text-[13px] px-[16px] py-[9px] rounded-[3px] border border-[#232b38] hover:border-tissue-csf hover:-translate-y-[1px] transition-all text-[#e7ebf1]">
               Access Dashboard
             </Link>
           </div>
