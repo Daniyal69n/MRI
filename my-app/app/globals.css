@@ -7,10 +7,11 @@
   --foreground: #0f172a; /* slate-900 */
 }
 
+/* Force light mode variables across the board for this theme */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0f172a; /* slate-900 */
-    --foreground: #f8fafc; /* slate-50 */
+    --background: #f8fafc; 
+    --foreground: #0f172a;
   }
 }
 
@@ -38,22 +39,22 @@ body {
 /* Custom Utilities for Premium Medical UI */
 @layer utilities {
   .glass-panel {
-    @apply bg-white/70 backdrop-blur-md border border-white/40 shadow-lg;
+    @apply bg-white border border-slate-200 shadow-sm rounded-xl;
   }
   
   .glass-panel-dark {
-    @apply bg-slate-900/70 backdrop-blur-md border border-slate-700/50 shadow-lg;
+    @apply bg-white border border-slate-200 shadow-sm rounded-xl;
   }
   
   .text-gradient-medical {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-mri-blue via-mri-glow to-mri-cyan;
+    @apply text-mri-blue font-semibold tracking-tight;
   }
   
   .hover-lift {
-    @apply transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl;
+    @apply transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-md;
   }
   
   .glow-border {
-    @apply relative after:absolute after:-inset-0.5 after:bg-gradient-to-r after:from-mri-cyan after:to-mri-glow after:rounded-xl after:blur after:opacity-0 hover:after:opacity-50 after:transition-opacity after:duration-500 after:-z-10;
+    @apply border-2 border-transparent focus-within:border-mri-glow transition-colors rounded-xl;
   }
 }
