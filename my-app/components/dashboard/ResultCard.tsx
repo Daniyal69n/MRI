@@ -6,7 +6,7 @@ import { StatusBadge } from './StatusBadge';
 import { Download, Eye } from 'lucide-react';
 
 interface ResultCardProps {
-  id: number;
+  id: string;
   patientId: string;
   date: string;
   status: 'Completed' | 'Processing' | 'Pending' | 'Failed';
@@ -44,34 +44,19 @@ export const ResultCard: React.FC<ResultCardProps> = ({
 
         {status === 'Completed' && volumes && (
           <>
-            <div className="space-y-3 pt-4 border-t border-gray-200">
-              <VolumeBar label="Gray Matter" value={volumes.grayMatter} color="bg-blue-600" />
-              <VolumeBar label="White Matter" value={volumes.whiteMatter} color="bg-green-600" />
-              <VolumeBar label="CSF" value={volumes.csf} color="bg-purple-600" />
+            <div className="space-y-3 pt-4 border-t border-slate-200">
+              <VolumeBar label="Gray Matter" value={volumes.grayMatter} color="bg-mri-blue" />
+              <VolumeBar label="White Matter" value={volumes.whiteMatter} color="bg-mri-teal" />
+              <VolumeBar label="CSF" value={volumes.csf} color="bg-mri-cyan" />
             </div>
 
-            {metrics && (
-              <div className="pt-4 border-t border-gray-200">
-                <h4 className="text-sm font-semibold text-gray-900 mb-3">Performance Metrics</h4>
-                <div className="grid grid-cols-2 gap-3">
-                  <MetricItem label="Dice Score" value={metrics.dice} />
-                  <MetricItem label="IoU" value={metrics.iou} />
-                  <MetricItem label="Accuracy" value={metrics.accuracy} />
-                  <MetricItem label="F1-Score" value={metrics.f1} />
-                </div>
-              </div>
-            )}
-
             <div className="flex flex-col sm:flex-row gap-2 pt-4">
-              <Link href={`/dashboard/results/${id}`} className="flex-1 min-w-0">
+              <Link href={`/dashboard/analysis/${id}`} className="flex-1 min-w-0">
                 <Button variant="primary" size="sm" className="w-full">
                   <Eye className="w-4 h-4 mr-2" />
                   View Details
                 </Button>
               </Link>
-              <Button variant="outline" size="sm" className="w-full sm:w-auto">
-                <Download className="w-4 h-4" />
-              </Button>
             </div>
           </>
         )}

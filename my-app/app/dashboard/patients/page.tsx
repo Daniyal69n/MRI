@@ -360,6 +360,17 @@ export default function PatientsPage() {
                               ))}
                             </ul>
                           </div>
+                          <div className="pt-3 border-t border-gray-200 mt-3">
+                            <Button 
+                              variant="primary" 
+                              size="sm" 
+                              className="w-full"
+                              onClick={() => router.push(`/dashboard/analysis/${selectedPatient.patientId}`)}
+                            >
+                              <FileImage className="w-4 h-4 mr-2" />
+                              View Clinical Report
+                            </Button>
+                          </div>
                         </div>
                       )}
                     </li>
