@@ -23,6 +23,8 @@ export const viewport = {
   maximumScale: 5,
 };
 
+import { ToastContainer } from "@/components/ui/ToastContainer";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -34,6 +36,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
+        <ToastContainer />
       </body>
     </html>
   );

@@ -104,10 +104,17 @@ export function addNotification(notification: Omit<Notification, 'id' | 'timesta
   // Add to beginning of array (newest first)
   notifications.unshift(newNotification);
   
-  // Keep only last 50 notifications
-  const limitedNotifications = notifications.slice(0, 50);
+  // Keep only the 50 most recent notifications
+  if (notifications.length > 50) {
+    notifications.length = 50;
+  }
   
-  saveNotifications(limitedNotifications);
+  saveNotifications(notifications);
+  
+  if (typeof window !== 'undefined') {
+    const toastEvent = new CustomEvent('showToast', { detail: newNotification });
+    window.dispatchEvent(toastEvent);
+  }
 }
 
 /**

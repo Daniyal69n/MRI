@@ -18,6 +18,7 @@ export default function RegisterPage() {
     password: '',
     pmdcNumber: '',
     specialization: '',
+    privacyConsent: false,
   });
   const [errors, setErrors] = useState<{
     firstName?: string;
@@ -28,6 +29,7 @@ export default function RegisterPage() {
     password?: string;
     pmdcNumber?: string;
     specialization?: string;
+    privacyConsent?: string;
     general?: string;
   }>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -66,6 +68,9 @@ export default function RegisterPage() {
     } else if (formData.password.length < 6) {
       newErrors.password = 'Password must be at least 6 characters';
     }
+    if (!formData.privacyConsent) {
+      newErrors.privacyConsent = 'You must agree to the Privacy Guidelines';
+    }
     
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -101,8 +106,13 @@ export default function RegisterPage() {
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type } = e.target as HTMLInputElement;
+    const checked = (e.target as HTMLInputElement).checked;
+    
+    setFormData(prev => ({ 
+      ...prev, 
+      [name]: type === 'checkbox' ? checked : value 
+    }));
     setErrors(prev => ({ ...prev, [name]: undefined }));
   };
 
@@ -236,6 +246,29 @@ export default function RegisterPage() {
                   <Eye className="w-5 h-5" />
                 )}
               </button>
+            </div>
+
+            <div className="pt-2">
+              <label className="flex items-start gap-3 cursor-pointer group">
+                <div className="relative flex items-center justify-center mt-0.5">
+                  <input
+                    type="checkbox"
+                    name="privacyConsent"
+                    checked={formData.privacyConsent}
+                    onChange={handleChange}
+                    className="peer appearance-none w-5 h-5 border border-[#232b38] rounded bg-[#090c11]/50 checked:bg-tissue-csf checked:border-tissue-csf transition-all cursor-pointer shadow-inner"
+                  />
+                  <CheckCircle className="absolute w-3.5 h-3.5 text-[#04211d] opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" />
+                </div>
+                <div className="text-sm leading-snug">
+                  <span className="text-[#8c96a8] group-hover:text-[#e7ebf1] transition-colors">
+                    I agree to the Terms of Service and acknowledge the HIPAA/GDPR Privacy Guidelines for handling medical imaging data.
+                  </span>
+                  {errors.privacyConsent && (
+                    <p className="mt-1 text-xs text-[#ff6b6b]">{errors.privacyConsent}</p>
+                  )}
+                </div>
+              </label>
             </div>
 
             {errors.general && (

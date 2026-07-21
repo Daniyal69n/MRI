@@ -266,8 +266,7 @@ function UploadPageContent() {
       }
       
       setPreprocessingResults(results);
-      setUploading(false);
-      setUploaded(true);
+      // Removed setUploading(false) and setUploaded(true) here - will do it after clustering
 
       // Save patient history (visit date, upload metadata, preprocessing results)
       const userJson = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
@@ -385,6 +384,19 @@ function UploadPageContent() {
         });
       });
 
+      // AUTOMATED CLUSTERING PIPELINE
+      for (let i = 0; i < results.length; i++) {
+        setProcessingProgress({
+          current: i + 1,
+          total: totalFiles,
+          currentFile: `FCM Clustering & ROI Extraction: ${results[i].filename}`
+        });
+        await runClustering(results[i]);
+      }
+
+      setUploading(false);
+      setUploaded(true);
+      
       // Keep results visible - no automatic redirect
     } catch (error: any) {
       console.error('Upload error:', error);
@@ -836,7 +848,7 @@ function UploadPageContent() {
                     ) : (
                       <>
                         <Upload className="w-5 h-5 mr-2" />
-                        Upload & Process
+                        Run Full Analysis Pipeline
                       </>
                     )}
                   </Button>
@@ -1023,27 +1035,6 @@ function UploadPageContent() {
                                 Preprocessed Image (256×256)
                               </h5>
                               <div className="flex items-center gap-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  disabled={!!clusteringLoading[result.filename]}
-                                  onClick={() => runClustering(result)}
-                                >
-                                  <Cpu className="w-4 h-4 mr-2" />
-                                  {clusteringLoading[result.filename] ? 'Clustering...' : 'Run Clustering'}
-                                </Button>
-                                <Button
-                                  variant="primary"
-                                  size="sm"
-                                  onClick={() => {
-                                    const link = document.createElement('a');
-                                    link.href = result.processed_image_base64;
-                                    link.download = `${result.filename.replace(/\.[^/.]+$/, '')}_processed_256x256.png`;
-                                    document.body.appendChild(link);
-                                    link.click();
-                                    document.body.removeChild(link);
-                                  }}
-                                >
                                   <Download className="w-4 h-4 mr-2" />
                                   Download Image
                                 </Button>
@@ -1178,16 +1169,28 @@ function UploadPageContent() {
                                         </div>
                                       )}
                                       {clusteringResults[result.filename]?.final_overlay_base64 && (
-                                        <div className="bg-white rounded-lg p-3 border border-gray-200 lg:col-span-2">
-                                          <p className="text-sm font-medium text-gray-800 mb-2">Final ROI Detection (BBox)</p>
-                                          <div className="bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center" style={{height: '300px'}}>
-                                            <img
-                                              src={clusteringResults[result.filename].final_overlay_base64}
-                                              alt="Final detection"
-                                              style={{objectFit: 'contain', maxWidth: '100%', maxHeight: '100%'}}
-                                            />
+                                        <>
+                                          <div className="bg-white rounded-lg p-3 border border-gray-200">
+                                            <p className="text-sm font-medium text-gray-800 mb-2">Original MRI (For Comparison)</p>
+                                            <div className="bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center" style={{height: '300px'}}>
+                                              <img
+                                                src={result.original_image_base64}
+                                                alt="Original"
+                                                style={{objectFit: 'contain', maxWidth: '100%', maxHeight: '100%'}}
+                                              />
+                                            </div>
                                           </div>
-                                        </div>
+                                          <div className="bg-white rounded-lg p-3 border border-gray-200">
+                                            <p className="text-sm font-medium text-gray-800 mb-2">Final ROI Detection (BBox)</p>
+                                            <div className="bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center" style={{height: '300px'}}>
+                                              <img
+                                                src={clusteringResults[result.filename].final_overlay_base64}
+                                                alt="Final detection"
+                                                style={{objectFit: 'contain', maxWidth: '100%', maxHeight: '100%'}}
+                                              />
+                                            </div>
+                                          </div>
+                                        </>
                                       )}
                                       {clusteringResults[result.filename]?.roi_base64 && (
                                         <div className="bg-white rounded-lg p-3 border border-gray-200 lg:col-span-2">
@@ -1257,9 +1260,41 @@ function UploadPageContent() {
                     </Card>
                   ))}
                 </div>
+              {/* PDF Export Button */}
+              {uploaded && clusteringResults && Object.keys(clusteringResults).length > 0 && (
+                <div className="flex justify-center mt-8">
+                  <Button
+                    variant="primary"
+                    className="w-full sm:w-auto font-bold py-3 px-6 text-lg shadow-lg"
+                    onClick={() => window.print()}
+                  >
+                    <FileText className="w-6 h-6 mr-2" />
+                    Export Clinical PDF Report
+                  </Button>
+                </div>
               )}
             </div>
           </Card>
+          
+          <style dangerouslySetInnerHTML={{__html: `
+            @media print {
+              body * {
+                visibility: hidden;
+              }
+              .space-y-6, .space-y-6 * {
+                visibility: visible;
+              }
+              .space-y-6 {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+              }
+              button {
+                display: none !important;
+              }
+            }
+          `}} />
         </>
       )}
 
