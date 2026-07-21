@@ -1035,6 +1035,18 @@ function UploadPageContent() {
                                 Preprocessed Image (256×256)
                               </h5>
                               <div className="flex items-center gap-2">
+                                <Button
+                                  variant="primary"
+                                  size="sm"
+                                  onClick={() => {
+                                    const link = document.createElement('a');
+                                    link.href = result.processed_image_base64;
+                                    link.download = `${result.filename.replace(/\.[^/.]+$/, '')}_processed_256x256.png`;
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
+                                  }}
+                                >
                                   <Download className="w-4 h-4 mr-2" />
                                   Download Image
                                 </Button>
@@ -1260,6 +1272,8 @@ function UploadPageContent() {
                     </Card>
                   ))}
                 </div>
+              )}
+              
               {/* PDF Export Button */}
               {uploaded && clusteringResults && Object.keys(clusteringResults).length > 0 && (
                 <div className="flex justify-center mt-8">
