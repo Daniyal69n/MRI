@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -36,14 +36,17 @@ interface PatientHistoryRecord {
   tumor_area_px?: number;
 }
 
-export default function ClinicalViewer({ params }: { params: { patientId: string } }) {
+export default function ClinicalViewer({ params }: { params: Promise<{ patientId: string }> | { patientId: string } }) {
   const router = useRouter();
   const [history, setHistory] = useState<PatientHistoryRecord[]>([]);
   const [patientData, setPatientData] = useState<{ patientId: string, firstName: string, lastName: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Safely unwrap params (works for both Next 14 object and Next 15 Promise)
+  const resolvedParams = params instanceof Promise ? use(params) : params;
+
   useEffect(() => {
-    fetch(`/api/patients/${params.patientId}/history`)
+    fetch(`/api/patients/${resolvedParams.patientId}/history`)
       .then(res => res.json())
       .then(data => {
         if (data.history) {
@@ -55,7 +58,7 @@ export default function ClinicalViewer({ params }: { params: { patientId: string
       })
       .catch(console.error)
       .finally(() => setIsLoading(false));
-  }, [params.patientId]);
+  }, [resolvedParams.patientId]);
 
   if (isLoading) {
     return (
@@ -85,7 +88,7 @@ export default function ClinicalViewer({ params }: { params: { patientId: string
 
   // Show the most recent analysis by default
   const latestAnalysis = history[0];
-  const displayPatientId = patientData ? patientData.patientId : params.patientId;
+  const displayPatientId = patientData ? patientData.patientId : resolvedParams.patientId;
 
   return (
     <div className="space-y-6 relative">
