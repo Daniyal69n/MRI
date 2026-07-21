@@ -29,7 +29,7 @@ export async function GET(
       .sort({ visitDate: -1 })
       .lean();
 
-    return NextResponse.json({ history }, { status: 200 });
+    return NextResponse.json({ history, patient }, { status: 200 });
   } catch (error: unknown) {
     console.error('Get patient history error:', error);
     return NextResponse.json(

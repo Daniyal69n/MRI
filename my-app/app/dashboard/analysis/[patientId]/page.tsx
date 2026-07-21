@@ -39,6 +39,7 @@ interface PatientHistoryRecord {
 export default function ClinicalViewer({ params }: { params: { patientId: string } }) {
   const router = useRouter();
   const [history, setHistory] = useState<PatientHistoryRecord[]>([]);
+  const [patientData, setPatientData] = useState<{ patientId: string, firstName: string, lastName: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -47,6 +48,9 @@ export default function ClinicalViewer({ params }: { params: { patientId: string
       .then(data => {
         if (data.history) {
           setHistory(data.history);
+        }
+        if (data.patient) {
+          setPatientData(data.patient);
         }
       })
       .catch(console.error)
@@ -81,6 +85,7 @@ export default function ClinicalViewer({ params }: { params: { patientId: string
 
   // Show the most recent analysis by default
   const latestAnalysis = history[0];
+  const displayPatientId = patientData ? patientData.patientId : params.patientId;
 
   return (
     <div className="space-y-6 relative">
@@ -107,7 +112,7 @@ export default function ClinicalViewer({ params }: { params: { patientId: string
               <User className="w-5 h-5 text-mri-blue" />
               <div>
                 <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">Patient ID</p>
-                <p className="font-semibold text-gray-900">{params.patientId}</p>
+                <p className="font-semibold text-gray-900">{displayPatientId}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">

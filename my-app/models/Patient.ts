@@ -37,7 +37,8 @@ const PatientSchema: Schema = new Schema(
     age: {
       type: Number,
       required: [true, 'Age is required'],
-      min: [0, 'Age must be a positive number'],
+      min: [1, 'Age must be at least 1 year'],
+      max: [90, 'Age cannot exceed 90 years'],
     },
     gender: {
       type: String,

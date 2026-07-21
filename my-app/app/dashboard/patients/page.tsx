@@ -365,7 +365,7 @@ export default function PatientsPage() {
                               variant="primary" 
                               size="sm" 
                               className="w-full"
-                              onClick={() => router.push(`/dashboard/analysis/${selectedPatient.patientId}`)}
+                              onClick={() => router.push(`/dashboard/analysis/${selectedPatient._id}`)}
                             >
                               <FileImage className="w-4 h-4 mr-2" />
                               View Clinical Report

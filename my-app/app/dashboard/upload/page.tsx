@@ -106,8 +106,8 @@ function UploadPageContent() {
     }
     if (!patientData.age) {
       newErrors.age = 'Age is required';
-    } else if (isNaN(Number(patientData.age)) || Number(patientData.age) < 0) {
-      newErrors.age = 'Age must be a valid number';
+    } else if (isNaN(Number(patientData.age)) || Number(patientData.age) < 1 || Number(patientData.age) > 90) {
+      newErrors.age = 'Age must be between 1 and 90 years';
     }
     if (!patientData.gender) {
       newErrors.gender = 'Gender is required';
@@ -584,6 +584,8 @@ function UploadPageContent() {
                 value={patientData.age}
                 onChange={handlePatientChange}
                 error={patientErrors.age}
+                min={1}
+                max={90}
                 required
               />
               <div>
