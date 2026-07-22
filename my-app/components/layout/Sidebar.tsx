@@ -134,7 +134,7 @@ export const Sidebar = () => {
         }`}
       />
       <aside
-        className={`fixed md:relative inset-y-0 left-0 z-50 w-64 flex-shrink-0 bg-white border-r border-slate-200 text-slate-600 min-h-screen flex flex-col shadow-sm transition-transform duration-300 ease-out md:translate-x-0 ${
+        className={`fixed md:relative inset-y-0 left-0 z-50 w-64 flex-shrink-0 bg-white border-r border-slate-200 text-slate-600 h-full flex flex-col shadow-sm transition-transform duration-300 ease-out md:translate-x-0 ${
           open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
       >
